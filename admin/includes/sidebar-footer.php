@@ -15,7 +15,8 @@
 <script src="<?php echo APP_URL; ?>assets/js/theme-toggle.js"></script>
 
 <!-- File upload component -->
-<script src="<?php echo APP_URL; ?>assets/js/file-upload.js"></script>s"></script>
+<script src="<?php echo APP_URL; ?>assets/js/file-upload.js"></script>
+</script>
 
 <script>
 /* Sidebar toggle mobile */

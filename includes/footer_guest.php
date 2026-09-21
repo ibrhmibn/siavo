@@ -57,7 +57,7 @@
         </div>
 
         <div class="copy">
-            <span>© <?php echo date('Y'); ?> Tim Developer SIAVO · Lembaga Kemahasiswaan</span>
+            <span>© <?php echo date('Y'); ?> Lenathyodev · Lembaga Kemahasiswaan</span>
             <span>Dibuat untuk mahasiswa.</span>
         </div>
     </div>
