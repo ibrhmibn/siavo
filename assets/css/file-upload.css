@@ -1,0 +1,140 @@
+/* ============================================
+   SIAVO — Reusable File Upload Component
+   Compact, no icon, responsive
+   ============================================ */
+
+.file-upload{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:14px;
+  padding:16px 18px;
+  border:1.5px dashed var(--line-strong);
+  border-radius:14px;
+  background:var(--surface-2);
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+  position:relative;
+  width:100%;
+  min-width:0;
+}
+.file-upload:hover{
+  border-color:var(--red);
+  background:var(--red-soft);
+}
+.file-upload input[type="file"]{
+  display:none !important;
+}
+
+.file-upload-info{
+  flex:1 1 200px;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.file-upload-title{
+  font-weight:700;
+  font-size:.88rem;
+  color:var(--ink);
+  margin:0;
+  line-height:1.4;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  transition:color .15s;
+}
+
+.file-upload-hint{
+  font-size:.74rem;
+  color:var(--ink-2);
+  opacity:.8;
+  margin:0;
+  line-height:1.4;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.file-upload-btn{
+  flex:0 0 auto;
+  padding:9px 18px;
+  border-radius:999px;
+  background:var(--red);
+  color:#fff;
+  font-weight:700;
+  font-size:.78rem;
+  letter-spacing:.02em;
+  transition:filter .15s;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.file-upload:hover .file-upload-btn{
+  filter:brightness(1.08);
+}
+
+.file-upload.has-file{
+  border-style:solid;
+  border-color:var(--green);
+  background:var(--green-soft);
+}
+.file-upload.has-file .file-upload-title{
+  color:var(--green);
+}
+
+/* Dark mode */
+:root[data-theme="dark"] .file-upload{
+  border-color:#4d282c;
+  background:#2a171a;
+}
+:root[data-theme="dark"] .file-upload:hover{
+  border-color:#ff3b4f;
+  background:#3a0d14;
+}
+:root[data-theme="dark"] .file-upload.has-file{
+  border-color:#4ade80;
+  background:#10301c;
+}
+:root[data-theme="dark"] .file-upload.has-file .file-upload-title{
+  color:#4ade80;
+}
+
+/* ============================================
+   NARROW CONTAINER (form admin col-lg-5)
+   Otomatis jadi vertikal
+   ============================================ */
+.col-lg-5 .file-upload,
+.col-md-6 .file-upload{
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+.col-lg-5 .file-upload .file-upload-info,
+.col-md-6 .file-upload .file-upload-info{
+  flex:1 1 auto;
+}
+.col-lg-5 .file-upload .file-upload-btn,
+.col-md-6 .file-upload .file-upload-btn{
+  flex:0 0 auto;
+  width:100%;
+  padding:11px 18px;
+}
+
+/* Mobile */
+@media (max-width: 520px){
+  .file-upload{
+    padding:14px 16px;
+    gap:12px;
+  }
+  .file-upload-info{
+    flex:1 1 100%;
+  }
+  .file-upload-btn{
+    flex:1 1 100%;
+    width:100%;
+    padding:11px 18px;
+  }
+}

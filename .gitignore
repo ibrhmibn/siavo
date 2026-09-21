@@ -1,0 +1,53 @@
+# ============================================
+# SIAVO — .gitignore
+# ============================================
+
+# ===== Config pribadi =====
+*.env
+.env
+.env.local
+config.local.php
+config-production.php
+
+# ===== Uploads (data user) — keep struktur folder =====
+uploads/*
+!uploads/.gitkeep
+!uploads/feedback/
+!uploads/feedback/.gitkeep
+
+# ===== Foto profil user =====
+assets/img/person/*
+!assets/img/person/ladla.webp
+!assets/img/person/person-f-9.webp
+
+# ===== Gambar kegiatan user =====
+assets/img/kegiatan/*
+!assets/img/kegiatan/.gitkeep
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Editor =====
+.vscode/
+.idea/
+*.sublime-project
+
+# ===== Logs =====
+*.log
+error_log
+php_errors.log
+
+# ===== Node =====
+node_modules/
+package-lock.json
+yarn.lock
+
+# ===== Backup =====
+*.sql.bak
+backup_*.sql
+
+# ===== ZIP =====
+*.zip
+*.tar.gz

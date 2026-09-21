@@ -1,0 +1,62 @@
+/* ============================================
+   SIAVO — Circle Wipe Theme Transition
+   View Transitions API + Fallback
+   ============================================ */
+
+/* Pseudo-element view-transition: matikan animasi default browser */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+    z-index: 1;
+}
+
+::view-transition-new(root) {
+    z-index: 9999;
+}
+
+/* Keyframes lingkaran melebar */
+@keyframes siavo-circle-wipe {
+    from {
+        clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 50%));
+    }
+    to {
+        clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 50%) var(--vt-y, 50%));
+    }
+}
+
+/* Aktif hanya jika <html class="vt-wipe-active"> */
+.vt-wipe-active::view-transition-new(root) {
+    animation: siavo-circle-wipe 500ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Matikan semua transition CSS lain selama view-transition berjalan
+   → mencegah "flash" saat warna lama terekam snapshot */
+.vt-disable-anim,
+.vt-disable-anim *,
+.vt-disable-anim *::before,
+.vt-disable-anim *::after {
+    transition: none !important;
+}
+
+/* Fallback: overlay fullscreen (untuk browser tanpa View Transitions API) */
+.siavo-theme-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    will-change: clip-path;
+}
+
+/* Hormati preferensi user yang gak suka animasi */
+@media (prefers-reduced-motion: reduce) {
+    .vt-wipe-active::view-transition-new(root) {
+        animation: none;
+    }
+    .siavo-theme-overlay {
+        transition: none !important;
+    }
+}
