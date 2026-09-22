@@ -159,8 +159,8 @@ include 'includes/sidebar.php';
                         </td>
                         <td class="col-aksi">
                             <a href="<?php echo APP_URL; ?>mahasiswa/tracking.php?ticket=<?php echo $l['nomor_tiket']; ?>"
-                                class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-search"></i> Tracking
+                                class="btn-icon-modern" title="Lacak Laporan" aria-label="Lacak Laporan">
+                                <i class="fas fa-search"></i>
                             </a>
                         </td>
                     </tr>

@@ -15,7 +15,7 @@ $user_data = getUserData($user_id);
 $error = '';
 $success = '';
 
-// URL fallback foto default
+// URL fallback foto default SVG
 $foto_default_url = APP_URL . 'assets/img/person/' . DEFAULT_PROFILE_PHOTO;
 
 // Proses update profil

@@ -9,7 +9,7 @@ if (!isLoggedIn() || getUserRole() != 'admin') {
     redirect('../login.php');
 }
 
-// AUTO-CLEANUP kegiatan lewat > 2 hari (max 1x per 6 jam)
+// AUTO-CLEANUP kegiatan lewat > 2 hari
 $auto_deleted_kegiatan = autoCleanupKegiatan();
 
 // Statistik
@@ -270,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    /* TOGGLE UPLOAD FILE */
     function toggleFeedbackFile() {
         var isSelesai = statusSelect.value === 'selesai';
         feedbackFileGroup.style.display = isSelesai ? 'block' : 'none';
@@ -284,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     statusSelect.addEventListener('change', toggleFeedbackFile);
 
-    /* PREVIEW FILE */
     feedbackFileInput.addEventListener('change', function() {
         feedbackFilePreview.innerHTML = '';
         var btn = feedbackFileGroup.querySelector('.btn-upload-pdf');
@@ -393,21 +391,25 @@ document.addEventListener('DOMContentLoaded', function() {
             timeline = '<p style="color:var(--ink-2);font-size:.85rem">Belum ada riwayat</p>';
         }
 
+        /* ===== LAMPIRAN — pake url_file dari server ===== */
         var lampiranHtml = '';
         if (data.dokumen && data.dokumen.length > 0) {
             lampiranHtml = '<div class="section-label">Lampiran</div><div class="attachments">' +
                 data.dokumen.map(function(d) {
-                    return '<div class="attachment-item" onclick="window.open(\'' + baseUrl + d.path_file +
+                    var fileUrl = d.url_file || (baseUrl + d.path_file);
+                    return '<div class="attachment-item" onclick="window.open(\'' + fileUrl +
                         '\',\'_blank\')"><i class="fas fa-file-pdf" style="color:var(--red)"></i> ' +
                         esc(d.nama_file_asli) + '</div>';
                 }).join('') + '</div>';
         }
 
+        /* ===== Bukti Formal — pake url_feedback ===== */
         var feedbackHtml = '';
         if (data.file_feedback) {
+            var feedbackUrl = data.url_feedback || data.file_feedback;
             feedbackHtml =
                 '<div class="section-label">Bukti Formal</div>' +
-                '<div class="attachment-item" onclick="window.open(\'' + esc(data.file_feedback) +
+                '<div class="attachment-item" onclick="window.open(\'' + esc(feedbackUrl) +
                 '\',\'_blank\')">' +
                 '<i class="fas fa-file-pdf" style="color:var(--red)"></i> Lihat dokumen PDF' +
                 '</div>';
@@ -438,7 +440,6 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="timeline">' + timeline + '</div>';
     }
 
-    /* CLOSE PANEL */
     function closePanel() {
         overlay.classList.remove('active');
         panel.classList.remove('active');

@@ -15,8 +15,8 @@ define('FEEDBACK_URL', '/siavo/uploads/feedback/');
 define('MAX_FILE_SIZE', 2 * 1024 * 1024); // 2MB
 define('ALLOWED_EXTENSIONS', ['pdf', 'jpg', 'jpeg', 'png']);
 
-// Foto profil default (dipakai kalau user belum upload / belum ganti)
-define('DEFAULT_PROFILE_PHOTO', 'ladla.webp');
+// Foto profil default — SVG avatar icon (bukan gambar upload user)
+define('DEFAULT_PROFILE_PHOTO', 'default-avatar.svg');
 
 // Mulai session
 session_start();

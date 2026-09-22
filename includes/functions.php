@@ -43,6 +43,42 @@ function validateEmail($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
 
+/**
+ * Convert path_file dari database (bisa absolute path Windows atau relative URL)
+ * jadi URL yang bisa diakses browser.
+ *
+ * Handle 3 format:
+ *   - C:/xampp/htdocs/siavo/uploads/file.jpg  (absolute path lama)
+ *   - C:\xampp\htdocs\siavo\uploads\file.jpg  (backslash)
+ *   - /siavo/uploads/file.jpg                 (relative URL baru)
+ *   - http://... atau https://...             (external)
+ */
+function getFileUrl($path_file) {
+    if (empty($path_file)) return '';
+
+    // Kalo udah URL lengkap (http/https) atau relative URL yang bener
+    if (preg_match('#^https?://#i', $path_file)) {
+        return $path_file;
+    }
+
+    // Kalo path dari filesystem (mengandung uploads/ atau uploads\)
+    if (preg_match('#[/\\\\]uploads[/\\\\](.+)$#i', $path_file, $m)) {
+        $filename = $m[1];
+        // Deteksi apakah masuk folder feedback atau bukan
+        if (stripos($filename, 'feedback') === 0 || strpos($path_file, 'feedback') !== false) {
+            // Kalo path mentah ada folder feedback
+            if (strpos($filename, 'feedback/') === 0 || strpos($filename, 'feedback\\') === 0) {
+                $clean = preg_replace('#^feedback[/\\\\]#i', '', $filename);
+                return FEEDBACK_URL . $clean;
+            }
+        }
+        return UPLOAD_URL . $filename;
+    }
+
+    // Fallback: ambil nama file aja, pake UPLOAD_URL
+    return UPLOAD_URL . basename(str_replace('\\', '/', $path_file));
+}
+
 // ============================================
 // 2. FUNGSI TIKET & UPLOAD
 // ============================================
@@ -121,11 +157,14 @@ function uploadFiles($files, $laporan_id) {
             }
 
             $new_filename = uniqid() . '_' . time() . '.' . $ext;
-            $path = UPLOAD_DIR . $new_filename;
+            $path_physical = UPLOAD_DIR . $new_filename;
 
-            if (move_uploaded_file($tmpname, $path)) {
+            // ⚠️ SIMPAN RELATIVE URL ke DB (bukan absolute path)
+            $path_db = UPLOAD_URL . $new_filename;  // contoh: /siavo/uploads/6a86c2...jpg
+
+            if (move_uploaded_file($tmpname, $path_physical)) {
                 $stmt = $conn->prepare("INSERT INTO dokumen_pendukung (laporan_id, nama_file_asli, nama_file_tersimpan, path_file, tipe_file, ukuran_file) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("issssi", $laporan_id, $filename, $new_filename, $path, $mime, $filesize);
+                $stmt->bind_param("issssi", $laporan_id, $filename, $new_filename, $path_db, $mime, $filesize);
 
                 if ($stmt->execute()) {
                     $uploaded[] = $filename;
@@ -203,7 +242,13 @@ function deleteFeedbackFile($laporan_id) {
         return ['success' => false, 'message' => 'Tidak ada file feedback.'];
     }
 
-    $file_path = $_SERVER['DOCUMENT_ROOT'] . $row['file_feedback'];
+    // Handle both relative URL & absolute path
+    $file_feedback = $row['file_feedback'];
+    $file_path = $_SERVER['DOCUMENT_ROOT'] . $file_feedback;
+    if (!file_exists($file_path)) {
+        $file_path = $file_feedback;
+    }
+
     if (file_exists($file_path)) {
         unlink($file_path);
     }
@@ -374,8 +419,6 @@ function getUserData($user_id) {
 
 // ============================================
 // 10. CLEANUP KEGIATAN LEWAT (> 2 hari)
-// Kegiatan hari ini, kemarin, dan 2 hari lewat
-// masih ditampilkan biar user tau event baru aja lewat.
 // ============================================
 
 function cleanupExpiredKegiatan() {
@@ -383,7 +426,6 @@ function cleanupExpiredKegiatan() {
 
     $img_dir = $_SERVER['DOCUMENT_ROOT'] . '/siavo/assets/img/kegiatan/';
 
-    // 1. Ambil daftar gambar yang akan dihapus
     $files = [];
     $stmt = $conn->prepare("SELECT gambar FROM kegiatan WHERE tanggal < DATE_SUB(CURDATE(), INTERVAL 2 DAY)");
     if ($stmt) {
@@ -395,7 +437,6 @@ function cleanupExpiredKegiatan() {
         $stmt->close();
     }
 
-    // 2. Hapus row dari database
     $deleted = 0;
     $stmt = $conn->prepare("DELETE FROM kegiatan WHERE tanggal < DATE_SUB(CURDATE(), INTERVAL 2 DAY)");
     if ($stmt) {
@@ -404,7 +445,6 @@ function cleanupExpiredKegiatan() {
         $stmt->close();
     }
 
-    // 3. Hapus file gambar fisik
     foreach ($files as $f) {
         $path = $img_dir . $f;
         if (file_exists($path)) @unlink($path);
@@ -415,7 +455,7 @@ function cleanupExpiredKegiatan() {
 
 function autoCleanupKegiatan() {
     $lock_file = sys_get_temp_dir() . '/siavo_kegiatan_cleanup.lock';
-    $interval  = 6 * 3600; // 6 jam
+    $interval  = 6 * 3600;
 
     if (file_exists($lock_file) && (time() - filemtime($lock_file)) < $interval) {
         return 0;

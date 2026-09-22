@@ -1,7 +1,7 @@
 <?php
 $page_active = $page_active ?? '';
 
-// Foto profil — pakai default kalau user belum upload
+// Foto profil — pakai default SVG kalau user belum upload
 $foto_nama = DEFAULT_PROFILE_PHOTO;
 if (isset($_SESSION['user_id']) && isset($conn)) {
     $stmt = $conn->prepare("SELECT foto_profil FROM users WHERE id = ?");
@@ -36,8 +36,10 @@ $user_name = $_SESSION['user_name'] ?? 'Mahasiswa';
     <!-- Bootstrap 5.3 (grid only) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="<?php echo APP_URL; ?>mahasiswa/assets/css/style.css">
-    <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/file-upload.css">
+    <link rel="stylesheet"
+        href="<?php echo APP_URL; ?>mahasiswa/assets/css/style.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'].'/siavo/mahasiswa/assets/css/style.css'); ?>">
+    <link rel="stylesheet"
+        href="<?php echo APP_URL; ?>assets/css/file-upload.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'].'/siavo/assets/css/file-upload.css'); ?>">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/theme-transition.css">
 
     <!-- Anti-flash theme -->

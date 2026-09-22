@@ -57,8 +57,20 @@ $stmt = $conn->prepare("SELECT * FROM dokumen_pendukung WHERE laporan_id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
-while ($row = $result->fetch_assoc()) $dokumen[] = $row;
+while ($row = $result->fetch_assoc()) {
+    // ⚡ Convert path_file jadi URL yang bisa diakses browser
+    $row['url_file'] = getFileUrl($row['path_file']);
+    $dokumen[] = $row;
+}
 $stmt->close();
+
+// ============================================
+// FEEDBACK FILE URL
+// ============================================
+$file_feedback_url = '';
+if (!empty($laporan['file_feedback'])) {
+    $file_feedback_url = getFileUrl($laporan['file_feedback']);
+}
 
 // ============================================
 // RIWAYAT
@@ -307,7 +319,7 @@ include '../admin/includes/sidebar.php';
                     <div class="attachments">
                         <?php foreach ($dokumen as $d): ?>
                         <div class="attachment-item"
-                            onclick="window.open('<?php echo APP_URL . $d['path_file']; ?>','_blank')">
+                            onclick="window.open('<?php echo htmlspecialchars($d['url_file']); ?>','_blank')">
                             <i class="fas fa-file-pdf"></i>
                             <div class="attachment-info">
                                 <span
@@ -382,7 +394,6 @@ include '../admin/includes/sidebar.php';
             </div>
 
             <!-- CARD: BUKTI FORMAL -->
-            <!-- CARD: BUKTI FORMAL -->
             <div class="card-modern">
                 <div class="card-modern-header">
                     <i class="fas fa-file-pdf"></i>
@@ -414,7 +425,7 @@ include '../admin/includes/sidebar.php';
                     </div>
 
                     <div class="feedback-actions">
-                        <a href="<?php echo $laporan['file_feedback']; ?>" target="_blank"
+                        <a href="<?php echo htmlspecialchars($file_feedback_url); ?>" target="_blank"
                             class="btn-feedback btn-feedback-view">
                             <i class="fas fa-eye"></i>
                             <span>Lihat Dokumen</span>

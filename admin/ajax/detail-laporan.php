@@ -16,7 +16,6 @@ if ($id <= 0) {
     exit;
 }
 
-// Get laporan detail dengan JOIN users untuk nama terbaru
 $stmt = $conn->prepare("
     SELECT l.*, k.nama_kategori, 
            u.nama_lengkap as pelapor_terbaru,
@@ -38,7 +37,6 @@ if (!$laporan) {
     exit;
 }
 
-// Override dengan data terbaru dari users
 if ($laporan['user_id']) {
     $laporan['nama_pelapor'] = $laporan['pelapor_terbaru'] ?? $laporan['nama_pelapor'];
     $laporan['nim'] = $laporan['nim_terbaru'] ?? $laporan['nim'];
@@ -46,22 +44,28 @@ if ($laporan['user_id']) {
     $laporan['prodi'] = $laporan['prodi_terbaru'] ?? $laporan['prodi'];
 }
 
-// Format tanggal
 $laporan['created_at'] = date('d/m/Y H:i', strtotime($laporan['created_at']));
 
-// Get dokumen
+// ====== DOKUMEN PENDUKUNG — tambah url_file ======
 $dokumen = [];
 $stmt = $conn->prepare("SELECT * FROM dokumen_pendukung WHERE laporan_id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
+    // ⚡ Convert path_file jadi URL yang bisa diakses browser
+    $row['url_file'] = getFileUrl($row['path_file']);
     $dokumen[] = $row;
 }
 $stmt->close();
 $laporan['dokumen'] = $dokumen;
 
-// Get riwayat status
+// ====== FEEDBACK FILE — convert juga ======
+if (!empty($laporan['file_feedback'])) {
+    $laporan['url_feedback'] = getFileUrl($laporan['file_feedback']);
+}
+
+// ====== RIWAYAT ======
 $riwayat = [];
 $stmt = $conn->prepare("
     SELECT r.*, u.nama_lengkap as petugas 
@@ -81,4 +85,3 @@ $stmt->close();
 $laporan['riwayat'] = $riwayat;
 
 echo json_encode(['success' => true, 'data' => $laporan]);
-?>
