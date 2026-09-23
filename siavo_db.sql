@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 21 Sep 2026 pada 18.43
+-- Waktu pembuatan: 23 Sep 2026 pada 08.14
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -47,7 +47,8 @@ INSERT INTO `artikel` (`id`, `judul`, `konten`, `kategori_info`, `created_at`) V
 (5, 'Panduan Upload Bukti Pendukung', '<p>Bukti pendukung adalah kunci utama agar laporanmu tidak ditolak.</p>\r\n\r\n<h4>Format yang diterima</h4>\r\n<ul>\r\n<li>PDF (maks 2 MB)</li>\r\n<li>JPG / JPEG (maks 2 MB)</li>\r\n<li>PNG (maks 2 MB)</li>\r\n</ul>\r\n\r\n<h4>Tips kompres file</h4>\r\n<p>Kalau ukuran file melebihi 2 MB, gunakan tool kompres online atau screenshot ulang dengan resolusi lebih rendah.</p>', 'panduan', '2026-09-11 09:35:17'),
 (8, 'Apakah Identitas Saya Terlindungi?', '<p>Ya. Identitas pelapor hanya diketahui oleh admin SIAVO yang menangani laporan tersebut.</p>\r\n\r\n<h4>Yang dilihat publik</h4>\r\n<p>Hanya statistik angka — bukan isi laporan atau identitas pelapor.</p>\r\n\r\n<h4>Yang dilihat admin</h4>\r\n<p>Admin bisa melihat identitas lengkap untuk keperluan verifikasi dan tindak lanjut.</p>\r\n\r\n<div class=\"note\">Kami tidak pernah membagikan identitas pelapor ke pihak ketiga tanpa izin.</div>', 'faq', '2026-09-15 09:35:17'),
 (9, 'Berapa Lama Laporan Saya Diproses?', '<p>Rata-rata laporan diverifikasi dalam 7 hari kerja sejak diajukan.</p>\r\n\r\n<h4>Kalau lebih dari 7 hari</h4>\r\n<p>Cek status di menu <strong>Laporan Saya</strong>. Kalau status masih \"Pengajuan\" setelah 7 hari, hubungi admin via kontak yang tertera.</p>\r\n\r\n<h4>Kalau stuck di \"Tindak Lanjut\"</h4>\r\n<p>Biasanya karena menunggu respons dari unit kampus terkait. Admin akan update keterangan di timeline.</p>', 'faq', '2026-09-09 09:35:17'),
-(10, 'Bagaimana Kalau Lupa Nomor Tiket?', '<p>Masuk ke akunmu, buka menu <strong>Laporan Saya</strong>. Semua laporan beserta nomor tiketnya ada di sana.</p>\r\n\r\n<h4>Kalau akun juga lupa</h4>\r\n<p>Hubungi admin SIAVO dengan menyebutkan NIM dan nama lengkap. Admin akan membantu pencarian.</p>', 'faq', '2026-09-01 09:35:17');
+(10, 'Bagaimana Kalau Lupa Nomor Tiket?', '<p>Masuk ke akunmu, buka menu <strong>Laporan Saya</strong>. Semua laporan beserta nomor tiketnya ada di sana.</p>\r\n\r\n<h4>Kalau akun juga lupa</h4>\r\n<p>Hubungi admin SIAVO dengan menyebutkan NIM dan nama lengkap. Admin akan membantu pencarian.</p>', 'faq', '2026-09-01 09:35:17'),
+(11, 'Hari Pendidikan Nasional', '<h4>hgfhgfhfdfdhfhfygf</h4><div><p><ol><li>yfdhgdhyfjfjghj</li><li>jguuyttuytuy</li><li>yfyfytyfytfty</li></ol><h4>,mndkjsahdkjsahdhaskd</h4><div><p><ol><li>lsadkjhasdkhasdkha</li><li>kasjdashdiuashd</li><li>jasgdasgsduygd</li></ol><div><div class=\"note\"><strong>Catatan:</strong>&nbsp;pukimay</div><p><br></p><p>dkasjdjkagdjasgdjasgdjasgdjasd</p><p>asdjkgasuydgasudguasgdsad</p><p>askdguaystdiusatydasd</p></div></p></div></p></div>', 'beasiswa', '2026-09-22 05:08:33');
 
 -- --------------------------------------------------------
 
@@ -66,13 +67,6 @@ CREATE TABLE `dokumen_pendukung` (
   `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data untuk tabel `dokumen_pendukung`
---
-
-INSERT INTO `dokumen_pendukung` (`id`, `laporan_id`, `nama_file_asli`, `nama_file_tersimpan`, `path_file`, `tipe_file`, `ukuran_file`, `uploaded_at`) VALUES
-(1, 1, 'WhatsApp Image 2026-08-28 at 13.10.18 (1).jpeg', '6ab13ef57d6f2_1790000885.jpeg', 'C:/xampp/htdocs/siavo/uploads/6ab13ef57d6f2_1790000885.jpeg', 'image/jpeg', 61521, '2026-09-21 14:28:05');
-
 -- --------------------------------------------------------
 
 --
@@ -85,20 +79,6 @@ CREATE TABLE `kategori` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data untuk tabel `kategori`
---
-
-INSERT INTO `kategori` (`id`, `nama_kategori`, `created_at`) VALUES
-(1, 'Akademik', '2026-06-17 21:16:20'),
-(2, 'Administrasi Kampus', '2026-06-17 21:16:20'),
-(3, 'Sarana dan Prasarana', '2026-06-17 21:16:20'),
-(4, 'Pelayanan Dosen dan Tendik', '2026-06-17 21:16:20'),
-(5, 'Beasiswa dan UKT', '2026-06-17 21:16:20'),
-(6, 'Organisasi Kemahasiswaan', '2026-06-17 21:16:20'),
-(7, 'Perundungan/Pelanggaran Hak Mahasiswa', '2026-06-17 21:16:20'),
-(8, 'Layanan Umum Lainnya', '2026-06-17 21:16:20');
-
 -- --------------------------------------------------------
 
 --
@@ -110,13 +90,18 @@ CREATE TABLE `kegiatan` (
   `nama` varchar(200) NOT NULL,
   `deskripsi` text NOT NULL,
   `tipe` enum('sema','siavo') NOT NULL,
-  `kuota` int(11) NOT NULL,
-  `sisa` int(11) NOT NULL,
   `tanggal` date NOT NULL,
   `waktu` time DEFAULT NULL,
   `gambar` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `kegiatan`
+--
+
+INSERT INTO `kegiatan` (`id`, `nama`, `deskripsi`, `tipe`, `tanggal`, `waktu`, `gambar`, `created_at`) VALUES
+(4, 'Launching SIAVO', 'Peluncuran resmi Sistem Informasi Aspirasi dan Advokasi Online (SIAVO). Platform ini hadir sebagai jembatan digital antara mahasiswa dan institusi kampus untuk menyampaikan aspirasi, keluhan, dan pengajuan advokasi secara transparan dan terdokumentasi.', 'siavo', '2026-09-24', '13:00:00', 'kegiatan_6ab36d7968e50_1790143865.jpeg', '2026-09-23 06:00:48');
 
 -- --------------------------------------------------------
 
@@ -145,13 +130,6 @@ CREATE TABLE `laporan` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data untuk tabel `laporan`
---
-
-INSERT INTO `laporan` (`id`, `nomor_tiket`, `user_id`, `nama_pelapor`, `nim`, `prodi`, `kontak`, `kategori_id`, `judul`, `isi`, `kronologi`, `status`, `prioritas`, `feedback_admin`, `file_feedback`, `file_tindak_lanjut`, `created_at`, `updated_at`) VALUES
-(1, 'SIAVO-D7D1A1', 2, 'Ibrahim Ibnu Satryo', '1234567890', '1234567890', '0898374982347', 6, '0', 'Asu dikiter terus aku ngentot', NULL, 'verifikasi', 'sedang', NULL, NULL, NULL, '2026-09-21 14:28:05', '2026-09-21 14:51:12');
-
 -- --------------------------------------------------------
 
 --
@@ -171,7 +149,9 @@ CREATE TABLE `pengumuman` (
 --
 
 INSERT INTO `pengumuman` (`id`, `judul`, `isi`, `created_by`, `created_at`) VALUES
-(1, 'SIAVO Resmi Diluncurkan!', 'Sistem Informasi Aspirasi dan Advokasi Online (SIAVO) resmi diluncurkan untuk memfasilitasi mahasiswa dalam menyampaikan aspirasi dan pengajuan advokasi.', 1, '2026-06-17 21:16:20');
+(1, 'SIAVO Resmi Diluncurkan!', 'Sistem Informasi Aspirasi dan Advokasi Online (SIAVO) resmi diluncurkan untuk memfasilitasi mahasiswa dalam menyampaikan aspirasi dan pengajuan advokasi.', 1, '2026-06-17 21:16:20'),
+(2, 'asdfghjkl', 'ececrvtvtvntvrvf', 1, '2026-09-22 05:05:40'),
+(3, 'asdfghjkl', 'ececrvtvtvntvrvf', 1, '2026-09-22 05:06:16');
 
 -- --------------------------------------------------------
 
@@ -187,14 +167,6 @@ CREATE TABLE `riwayat_status` (
   `petugas_id` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data untuk tabel `riwayat_status`
---
-
-INSERT INTO `riwayat_status` (`id`, `laporan_id`, `status`, `keterangan`, `petugas_id`, `created_at`) VALUES
-(1, 1, 'pengajuan', 'Aspirasi berhasil dikirim dan masuk ke tahap pengajuan.', NULL, '2026-09-21 14:28:05'),
-(2, 1, 'verifikasi', 'oke tod', 1, '2026-09-21 14:51:12');
 
 -- --------------------------------------------------------
 
@@ -221,8 +193,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `nama_lengkap`, `email`, `nim`, `prodi`, `kontak`, `role`, `foto_profil`, `created_at`) VALUES
-(1, 'admin', '$2y$10$T0vpB3kpYFsoBjaP2w94oufYB.gMlw.BmO4vDSYr6OXWibcLG3zIu', 'Administrator', 'ibrahimtyo39@gmail.com', NULL, NULL, NULL, 'admin', NULL, '2026-06-18 04:16:20'),
-(2, 'Ibrahim', '$2y$10$95GqBmoqNYMIH7KTHL2h7enxLVo0kZwFj45G/9R6b4kawP0ZYx9l6', 'Ibrahim Ibnu Satryo', 'ibrahimtyosec@gmail.com', '1234567890', '1234567890', '0898374982347', 'mahasiswa', NULL, '2026-09-21 14:26:37');
+(1, 'admin', '$2y$10$T0vpB3kpYFsoBjaP2w94oufYB.gMlw.BmO4vDSYr6OXWibcLG3zIu', 'Administrator', 'ibrahimtyo39@gmail.com', NULL, NULL, NULL, 'admin', NULL, '2026-06-18 04:16:20');
 
 --
 -- Indexes for dumped tables
@@ -292,49 +263,49 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT untuk tabel `artikel`
 --
 ALTER TABLE `artikel`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT untuk tabel `dokumen_pendukung`
 --
 ALTER TABLE `dokumen_pendukung`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `kategori`
 --
 ALTER TABLE `kategori`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `kegiatan`
 --
 ALTER TABLE `kegiatan`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT untuk tabel `laporan`
 --
 ALTER TABLE `laporan`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `pengumuman`
 --
 ALTER TABLE `pengumuman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT untuk tabel `riwayat_status`
 --
 ALTER TABLE `riwayat_status`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
