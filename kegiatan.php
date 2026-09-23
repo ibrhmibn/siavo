@@ -25,7 +25,6 @@ elseif ($waktu_filter === 'sudah_lewat') $where[] = "tanggal < CURDATE()";
 $where_sql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $kegiatan = [];
-// Urutan: akan datang dulu (terdekat -> terjauh), lalu sudah lewat (terbaru -> terlama).
 $order_sql = "ORDER BY (tanggal < CURDATE()) ASC, IF(tanggal >= CURDATE(), tanggal, NULL) ASC, tanggal DESC";
 $r = $conn->query("SELECT * FROM kegiatan $where_sql $order_sql");
 if ($r) { while ($row = $r->fetch_assoc()) $kegiatan[] = $row; }
@@ -38,10 +37,6 @@ if ($r) $total_kegiatan = (int)$r->fetch_assoc()['c'];
 $total_bulan_ini = 0;
 $r = $conn->query("SELECT COUNT(*) c FROM kegiatan WHERE MONTH(tanggal)=MONTH(CURDATE()) AND YEAR(tanggal)=YEAR(CURDATE())");
 if ($r) $total_bulan_ini = (int)$r->fetch_assoc()['c'];
-
-$total_sisa = 0;
-$r = $conn->query("SELECT SUM(sisa) s FROM kegiatan WHERE tanggal >= CURDATE()");
-if ($r) $total_sisa = (int)$r->fetch_assoc()['s'];
 
 $conn->close();
 include 'includes/header_guest.php';
@@ -175,7 +170,6 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
             <!-- ============================================== -->
             <?php if ($featured):
                     $is_upcoming = strtotime($featured['tanggal']) >= strtotime(date('Y-m-d'));
-                    $persen = $featured['kuota'] > 0 ? round(($featured['kuota'] - $featured['sisa']) / $featured['kuota'] * 100) : 0;
                     $img = !empty($featured['gambar'])
                         ? APP_URL . 'assets/img/kegiatan/' . $featured['gambar']
                         : placeholderKegiatan($featured['tipe'] === 'sema' ? '#4e0009' : '#1d4ed8', 800, 280);
@@ -209,20 +203,10 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
                                     <?php echo date('H.i', strtotime($featured['waktu'])); ?> WIB
                                 </span>
                                 <?php endif; ?>
-                                <span><i class="fa-solid fa-ticket"></i><?php echo $featured['sisa']; ?> kursi
-                                    tersisa</span>
                             </p>
                         </div>
                     </div>
                     <p class="k-desc"><?php echo nl2br(htmlspecialchars($featured['deskripsi'])); ?></p>
-                    <div class="progress">
-                        <div class="progress-row"><span>Kuota terisi</span><span><?php echo $persen; ?>% terisi</span>
-                        </div>
-                        <div class="track" role="progressbar" aria-valuenow="<?php echo $persen; ?>" aria-valuemin="0"
-                            aria-valuemax="100">
-                            <div class="fill" style="width:<?php echo $persen; ?>%"></div>
-                        </div>
-                    </div>
                 </div>
             </article>
             <?php endif; ?>
@@ -270,8 +254,7 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
                         <span><i class="fa-solid fa-flag-checkered"></i>Kegiatan selesai</span>
                         <span class="badge badge--done">Selesai</span>
                         <?php else: ?>
-                        <span><i class="fa-solid fa-ticket"></i><?php echo $k['sisa']; ?> dari
-                            <?php echo $k['kuota']; ?> kursi tersisa</span>
+                        <span><i class="fa-solid fa-calendar-check"></i>Kegiatan akan datang</span>
                         <?php endif; ?>
                     </div>
                 </article>
@@ -304,7 +287,6 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
                 <div class="stat-list">
                     <div class="stat"><b><?php echo $total_kegiatan; ?></b><span>Total kegiatan</span></div>
                     <div class="stat"><b><?php echo $total_bulan_ini; ?></b><span>Bulan ini</span></div>
-                    <div class="stat"><b><?php echo $total_sisa; ?></b><span>Sisa kuota</span></div>
                 </div>
             </section>
 

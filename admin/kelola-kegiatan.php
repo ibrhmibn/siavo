@@ -74,8 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $deskripsi  = trim($_POST['deskripsi'] ?? '');
             $tanggal    = $_POST['tanggal'] ?? '';
             $waktu      = $_POST['waktu'] ?? null;
-            $kuota      = intval($_POST['kuota'] ?? 0);
-            $sisa       = intval($_POST['sisa'] ?? 0);
             $tipe       = in_array($_POST['tipe'] ?? '', ['sema','siavo']) ? $_POST['tipe'] : 'sema';
             $edit_id    = intval($_POST['edit_id'] ?? 0);
 
@@ -120,11 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->close();
 
                         if ($gambar_baru) {
-                            $stmt = $conn->prepare("UPDATE kegiatan SET nama=?, deskripsi=?, tanggal=?, waktu=?, kuota=?, sisa=?, tipe=?, gambar=? WHERE id=?");
-                            $stmt->bind_param("ssssiissi", $nama, $deskripsi, $tanggal, $waktu, $kuota, $sisa, $tipe, $gambar_baru, $edit_id);
+                            $stmt = $conn->prepare("UPDATE kegiatan SET nama=?, deskripsi=?, tanggal=?, waktu=?, tipe=?, gambar=? WHERE id=?");
+                            $stmt->bind_param("ssssssi", $nama, $deskripsi, $tanggal, $waktu, $tipe, $gambar_baru, $edit_id);
                         } else {
-                            $stmt = $conn->prepare("UPDATE kegiatan SET nama=?, deskripsi=?, tanggal=?, waktu=?, kuota=?, sisa=?, tipe=? WHERE id=?");
-                            $stmt->bind_param("ssssiisi", $nama, $deskripsi, $tanggal, $waktu, $kuota, $sisa, $tipe, $edit_id);
+                            $stmt = $conn->prepare("UPDATE kegiatan SET nama=?, deskripsi=?, tanggal=?, waktu=?, tipe=? WHERE id=?");
+                            $stmt->bind_param("sssssi", $nama, $deskripsi, $tanggal, $waktu, $tipe, $edit_id);
                         }
 
                         if ($stmt->execute()) {
@@ -140,8 +138,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         $stmt->close();
                     } else {
-                        $stmt = $conn->prepare("INSERT INTO kegiatan (nama, deskripsi, tanggal, waktu, kuota, sisa, tipe, gambar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                        $stmt->bind_param("ssssiiss", $nama, $deskripsi, $tanggal, $waktu, $kuota, $sisa, $tipe, $gambar_baru);
+                        $stmt = $conn->prepare("INSERT INTO kegiatan (nama, deskripsi, tanggal, waktu, tipe, gambar) VALUES (?, ?, ?, ?, ?, ?)");
+                        $stmt->bind_param("ssssss", $nama, $deskripsi, $tanggal, $waktu, $tipe, $gambar_baru);
                         if ($stmt->execute()) {
                             $success = 'Kegiatan berhasil ditambahkan.';
                         } else {
@@ -256,34 +254,22 @@ include '../admin/includes/sidebar.php';
                         </div>
 
                         <div class="row g-2 mb-3">
-                            <div class="col-6">
+                            <div class="col-7">
                                 <label>Tanggal <span class="text-danger">*</span></label>
                                 <input type="date" name="tanggal" class="form-control" id="tanggal" required>
                             </div>
-                            <div class="col-6">
+                            <div class="col-5">
                                 <label>Waktu</label>
                                 <input type="time" name="waktu" class="form-control" id="waktu">
                             </div>
                         </div>
 
-                        <div class="row g-2 mb-3">
-                            <div class="col-4">
-                                <label>Kuota <span class="text-danger">*</span></label>
-                                <input type="number" name="kuota" class="form-control" id="kuota" min="1" value="50"
-                                    required>
-                            </div>
-                            <div class="col-4">
-                                <label>Sisa Kursi <span class="text-danger">*</span></label>
-                                <input type="number" name="sisa" class="form-control" id="sisa" min="0" value="50"
-                                    required>
-                            </div>
-                            <div class="col-4">
-                                <label>Tipe <span class="text-danger">*</span></label>
-                                <select name="tipe" class="form-select" id="tipe" required>
-                                    <option value="sema">SEMA</option>
-                                    <option value="siavo">SIAVO</option>
-                                </select>
-                            </div>
+                        <div class="mb-3">
+                            <label>Tipe <span class="text-danger">*</span></label>
+                            <select name="tipe" class="form-select" id="tipe" required>
+                                <option value="sema">SEMA</option>
+                                <option value="siavo">SIAVO</option>
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -348,7 +334,6 @@ include '../admin/includes/sidebar.php';
                                 <th>Nama</th>
                                 <th>Jadwal</th>
                                 <th>Tipe</th>
-                                <th class="text-center">Kursi</th>
                                 <th class="text-center" style="width:90px">Aksi</th>
                             </tr>
                         </thead>
@@ -393,10 +378,6 @@ include '../admin/includes/sidebar.php';
                                         <?php echo strtoupper($k['tipe']); ?>
                                     </span>
                                 </td>
-                                <td class="text-center small">
-                                    <span style="font-weight:700;color:var(--red)"><?php echo $k['sisa']; ?></span>
-                                    <span class="text-muted">/ <?php echo $k['kuota']; ?></span>
-                                </td>
                                 <td class="text-center">
                                     <button type="button" class="btn-icon-modern edit" onclick='editKegiatan(<?php echo json_encode([
                                             "id" => $k["id"],
@@ -404,8 +385,6 @@ include '../admin/includes/sidebar.php';
                                             "deskripsi" => $k["deskripsi"],
                                             "tanggal" => $k["tanggal"],
                                             "waktu" => $k["waktu"],
-                                            "kuota" => $k["kuota"],
-                                            "sisa" => $k["sisa"],
                                             "tipe" => $k["tipe"],
                                             "gambar" => $k["gambar"]
                                         ]); ?>)' title="Edit">
@@ -445,8 +424,6 @@ function editKegiatan(data) {
     document.getElementById('deskripsi').value = data.deskripsi;
     document.getElementById('tanggal').value = data.tanggal;
     document.getElementById('waktu').value = data.waktu || '';
-    document.getElementById('kuota').value = data.kuota;
-    document.getElementById('sisa').value = data.sisa;
     document.getElementById('tipe').value = data.tipe;
 
     document.getElementById('gambar').value = '';
@@ -474,8 +451,6 @@ document.getElementById('cancelBtn').addEventListener('click', function() {
     document.getElementById('deskripsi').value = '';
     document.getElementById('tanggal').value = '';
     document.getElementById('waktu').value = '';
-    document.getElementById('kuota').value = 50;
-    document.getElementById('sisa').value = 50;
     document.getElementById('tipe').value = 'sema';
     document.getElementById('gambar').value = '';
     document.getElementById('gambarPreviewWrap').style.display = 'none';
