@@ -30,6 +30,10 @@ if (!empty($ticket_number)) {
     if ($result->num_rows > 0) {
         $laporan = $result->fetch_assoc();
 
+        if (!empty($laporan['file_feedback'])) {
+            $laporan['url_feedback'] = getFileUrl($laporan['file_feedback']);
+        }
+
         $stmt_riwayat = $conn->prepare("
             SELECT r.*, u.nama_lengkap as petugas 
             FROM riwayat_status r 
@@ -46,6 +50,20 @@ if (!empty($ticket_number)) {
         $error = 'Nomor tiket tidak ditemukan atau bukan milik Anda.';
     }
     $stmt->close();
+}
+
+// ============================================
+// FALLBACK JUDUL
+// ============================================
+$judul_tampil = '';
+if ($laporan) {
+    $judul_tampil = $laporan['judul'] ?? '';
+    if (empty($judul_tampil) || $judul_tampil === '0') {
+        $judul_tampil = mb_strimwidth(strip_tags($laporan['isi'] ?? ''), 0, 60, '...');
+    }
+    if (empty($judul_tampil)) {
+        $judul_tampil = '(Tanpa judul)';
+    }
 }
 
 include '../mahasiswa/includes/sidebar.php';
@@ -91,13 +109,18 @@ include '../mahasiswa/includes/sidebar.php';
             </div>
             <div class="card-body">
 
+                <!-- Judul Laporan -->
+                <h3 class="detail-title" style="margin-bottom:20px">
+                    <?php echo htmlspecialchars($judul_tampil); ?>
+                </h3>
+
                 <!-- Identitas Pelapor -->
                 <h4 class="detail-section-title">Informasi Pelapor</h4>
                 <div class="detail-list">
                     <div class="detail-item">
                         <div class="detail-label"><i class="fas fa-user"></i>Nama Lengkap</div>
-                        <div class="detail-value"><?php echo htmlspecialchars($laporan['nama_pelapor'] ?? 'Anonim'); ?>
-                        </div>
+                        <div class="detail-value">
+                            <?php echo htmlspecialchars($laporan['nama_pelapor'] ?? 'Anonim'); ?></div>
                     </div>
                     <div class="detail-item">
                         <div class="detail-label"><i class="fas fa-id-card"></i>NIM</div>
@@ -158,17 +181,45 @@ include '../mahasiswa/includes/sidebar.php';
                     <?php echo nl2br(htmlspecialchars($laporan['isi'])); ?>
                 </div>
 
-                <!-- Bukti Formal -->
+                <!-- ============================================ -->
+                <!-- BUKTI FORMAL DARI ADMIN                       -->
+                <!-- ============================================ -->
                 <?php if (!empty($laporan['file_feedback'])): ?>
-                <div style="margin-top:20px">
-                    <div class="detail-label" style="margin-bottom:8px">
-                        <i class="fas fa-file-pdf" style="color:var(--red)"></i>
-                        Bukti Formal
+                <div style="margin-top:24px">
+                    <h4 class="detail-section-title" style="color:var(--green)">
+                        <i class="fas fa-file-pdf"></i> Bukti Formal dari Admin
+                    </h4>
+
+                    <div class="feedback-user-box">
+                        <div class="feedback-user-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="feedback-user-info">
+                            <div class="feedback-user-title">
+                                Bukti Formal — <?php echo htmlspecialchars($laporan['nomor_tiket']); ?>.pdf
+                            </div>
+                            <div class="feedback-user-meta">
+                                <i class="far fa-calendar"></i>
+                                Diunggah: <?php echo date('d M Y · H:i', strtotime($laporan['updated_at'])); ?> WIB
+                            </div>
+                        </div>
                     </div>
-                    <a href="<?php echo $laporan['file_feedback']; ?>" target="_blank"
-                        class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-download"></i> Download PDF
-                    </a>
+
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
+                        <a href="<?php echo htmlspecialchars($laporan['url_feedback']); ?>" target="_blank"
+                            class="btn btn-primary" style="padding:12px 20px;font-weight:700">
+                            <i class="fas fa-eye"></i> Lihat Bukti Formal
+                        </a>
+                        <a href="<?php echo htmlspecialchars($laporan['url_feedback']); ?>" download
+                            class="btn-icon-modern" title="Download PDF">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+
+                    <div class="feedback-user-hint">
+                        <i class="fas fa-info-circle"></i>
+                        Dokumen ini merupakan tanggapan resmi dari pihak kampus.
+                    </div>
                 </div>
                 <?php endif; ?>
 
@@ -232,6 +283,74 @@ include '../mahasiswa/includes/sidebar.php';
     padding-bottom: 8px;
     border-bottom: 2px solid var(--red);
     display: inline-block;
+}
+
+/* Bukti formal box di sisi mahasiswa */
+.feedback-user-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--green-soft);
+    border: 1px solid var(--green);
+    border-radius: 14px;
+}
+
+.feedback-user-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--green);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 1.25rem;
+    flex: none;
+}
+
+.feedback-user-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.feedback-user-title {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: .88rem;
+    color: var(--green);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.feedback-user-meta {
+    font-size: .74rem;
+    color: var(--ink-2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.feedback-user-meta i {
+    color: var(--red)
+}
+
+.feedback-user-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: .72rem;
+    color: var(--ink-2);
+    opacity: .75;
+}
+
+.feedback-user-hint i {
+    color: var(--red)
 }
 </style>
 

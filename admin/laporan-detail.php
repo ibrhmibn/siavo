@@ -50,6 +50,17 @@ if ($laporan['user_id']) {
 }
 
 // ============================================
+// FALLBACK JUDUL (kalo judul kosong / '0')
+// ============================================
+$judul_tampil = $laporan['judul'] ?? '';
+if (empty($judul_tampil) || $judul_tampil === '0') {
+    $judul_tampil = mb_strimwidth(strip_tags($laporan['isi'] ?? ''), 0, 60, '...');
+}
+if (empty($judul_tampil)) {
+    $judul_tampil = '(Tanpa judul)';
+}
+
+// ============================================
 // DOKUMEN
 // ============================================
 $dokumen = [];
@@ -58,7 +69,6 @@ $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
-    // ⚡ Convert path_file jadi URL yang bisa diakses browser
     $row['url_file'] = getFileUrl($row['path_file']);
     $dokumen[] = $row;
 }
@@ -166,6 +176,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                     $laporan['prodi_pelapor']  = $laporan['prodi'] ?? '';
                 }
 
+                if (!empty($laporan['file_feedback'])) {
+                    $file_feedback_url = getFileUrl($laporan['file_feedback']);
+                }
+
                 $riwayat = [];
                 $stmt = $conn->prepare("
                     SELECT r.*, u.nama_lengkap as petugas 
@@ -192,9 +206,6 @@ include '../admin/includes/sidebar.php';
 
 <div class="container-fluid">
 
-    <!-- ============================================
-         PAGE HEADER
-         ============================================ -->
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
         <div>
             <h1 class="h3 fw-bold" style="color: var(--siavo-red-heading) !important;">Detail Laporan</h1>
@@ -221,12 +232,9 @@ include '../admin/includes/sidebar.php';
 
     <div class="row g-4">
 
-        <!-- ============================================
-             KIRI: DETAIL LAPORAN + DOKUMEN
-             ============================================ -->
+        <!-- KIRI -->
         <div class="col-lg-7">
 
-            <!-- CARD: DETAIL LAPORAN -->
             <div class="card-modern">
                 <div class="card-modern-header">
                     <i class="fas fa-circle-info"></i>
@@ -235,7 +243,6 @@ include '../admin/includes/sidebar.php';
                 </div>
                 <div class="card-modern-body">
 
-                    <!-- Nomor Tiket Highlight -->
                     <div class="ticket-highlight">
                         <div class="ticket-highlight-label">
                             <i class="fas fa-ticket"></i> Nomor Tiket
@@ -245,7 +252,6 @@ include '../admin/includes/sidebar.php';
                         </div>
                     </div>
 
-                    <!-- Grid Info -->
                     <div class="info-grid">
                         <div>
                             <span class="label">Pelapor</span>
@@ -284,16 +290,13 @@ include '../admin/includes/sidebar.php';
                         </div>
                     </div>
 
-                    <!-- Judul -->
                     <div class="section-label">Judul Laporan</div>
-                    <div class="content-title-box"><?php echo htmlspecialchars($laporan['judul'] ?? '(Tanpa judul)'); ?>
+                    <div class="content-title-box"><?php echo htmlspecialchars($judul_tampil); ?>
                     </div>
 
-                    <!-- Isi -->
                     <div class="section-label">Isi Laporan</div>
                     <div class="content-text"><?php echo nl2br(htmlspecialchars($laporan['isi'])); ?></div>
 
-                    <!-- Feedback Admin (kalau selesai) -->
                     <?php if ($laporan['status'] == 'selesai' && !empty($laporan['feedback_admin'])): ?>
                     <div class="section-label">Feedback Admin</div>
                     <div class="content-text"
@@ -305,7 +308,6 @@ include '../admin/includes/sidebar.php';
                 </div>
             </div>
 
-            <!-- CARD: DOKUMEN PENDUKUNG -->
             <?php if (!empty($dokumen)): ?>
             <div class="card-modern">
                 <div class="card-modern-header">
@@ -336,12 +338,10 @@ include '../admin/includes/sidebar.php';
 
         </div>
 
-        <!-- ============================================
-             KANAN: UPDATE STATUS + BUKTI FORMAL + RIWAYAT
-             ============================================ -->
+        <!-- KANAN -->
         <div class="col-lg-5">
 
-            <!-- CARD: UPDATE STATUS -->
+            <!-- UPDATE STATUS -->
             <div class="card-modern">
                 <div class="card-modern-header">
                     <i class="fas fa-pencil-square"></i>
@@ -393,7 +393,7 @@ include '../admin/includes/sidebar.php';
                 </div>
             </div>
 
-            <!-- CARD: BUKTI FORMAL -->
+            <!-- BUKTI FORMAL -->
             <div class="card-modern">
                 <div class="card-modern-header">
                     <i class="fas fa-file-pdf"></i>
@@ -408,7 +408,6 @@ include '../admin/includes/sidebar.php';
 
                     <?php if (!empty($laporan['file_feedback'])): ?>
 
-                    <!-- ===== STATE: FILE SUDAH ADA ===== -->
                     <div class="feedback-card">
                         <div class="feedback-card-thumb">
                             <i class="fas fa-file-pdf"></i>
@@ -436,9 +435,16 @@ include '../admin/includes/sidebar.php';
                         </button>
                     </div>
 
+                    <div style="margin-top:14px">
+                        <button type="button" class="btn-feedback btn-feedback-upload" data-bs-toggle="modal"
+                            data-bs-target="#uploadFeedbackModal">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Ganti Bukti Formal (PDF)</span>
+                        </button>
+                    </div>
+
                     <?php else: ?>
 
-                    <!-- ===== STATE: FILE BELUM ADA ===== -->
                     <div class="feedback-empty">
                         <div class="feedback-empty-icon">
                             <i class="fas fa-file-pdf"></i>
@@ -464,7 +470,7 @@ include '../admin/includes/sidebar.php';
                 </div>
             </div>
 
-            <!-- CARD: RIWAYAT STATUS -->
+            <!-- RIWAYAT -->
             <div class="card-modern">
                 <div class="card-modern-header">
                     <i class="fas fa-clock-rotate-left"></i>
@@ -523,7 +529,9 @@ include '../admin/includes/sidebar.php';
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="uploadFeedbackForm" enctype="multipart/form-data">
+
+            <form id="uploadFeedbackForm" enctype="multipart/form-data"
+                onsubmit="handleUploadFeedback(event, this); return false;">
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="laporan_id" value="<?php echo $laporan['id']; ?>">
@@ -534,8 +542,10 @@ include '../admin/includes/sidebar.php';
                             accept=".pdf" required>
                         <div class="form-text">Maksimal 2MB, hanya file PDF</div>
                     </div>
+
                     <div id="uploadFeedbackStatus" class="alert d-none"></div>
                 </div>
+
                 <div class="modal-footer border-top-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-modern-primary" id="btnUploadFeedback">
@@ -554,92 +564,135 @@ document.addEventListener('DOMContentLoaded', function() {
     var keteranganInput = document.getElementById('keteranganInput');
     var form = document.getElementById('formUpdateStatus');
 
-    select.addEventListener('change', function() {
-        var value = this.value;
-        if (value === 'selesai') {
-            keteranganDiv.style.display = 'block';
-            keteranganInput.setAttribute('required', 'required');
-        } else {
-            keteranganDiv.style.display = 'none';
-            keteranganInput.removeAttribute('required');
-        }
-    });
+    if (select && keteranganDiv && keteranganInput && form) {
+        select.addEventListener('change', function() {
+            var value = this.value;
+            if (value === 'selesai') {
+                keteranganDiv.style.display = 'block';
+                keteranganInput.setAttribute('required', 'required');
+            } else {
+                keteranganDiv.style.display = 'none';
+                keteranganInput.removeAttribute('required');
+            }
+        });
 
-    form.addEventListener('submit', function(e) {
-        var action = select.value;
-        if (!action) {
-            e.preventDefault();
-            alert('Silakan pilih aksi terlebih dahulu!');
-            return false;
-        }
-        if (action === 'selesai') {
-            var ket = keteranganInput.value.trim();
-            if (!ket) {
+        form.addEventListener('submit', function(e) {
+            var action = select.value;
+            if (!action) {
                 e.preventDefault();
-                alert('Keterangan wajib diisi untuk menyelesaikan laporan!');
-                keteranganInput.focus();
+                alert('Silakan pilih aksi terlebih dahulu!');
                 return false;
             }
-        }
-        var labels = {
-            'verifikasi': 'memverifikasi',
-            'tindak_lanjut': 'melanjutkan ke tindak lanjut',
-            'selesai': 'menyelesaikan'
-        };
-        if (!confirm('Yakin ingin ' + (labels[action] || 'mengupdate') + ' laporan ini?')) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    /* ===== UPLOAD FEEDBACK ===== */
-    var uploadForm = document.getElementById('uploadFeedbackForm');
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            var formData = new FormData(this);
-            var statusDiv = document.getElementById('uploadFeedbackStatus');
-            var btn = document.getElementById('btnUploadFeedback');
-            var originalText = btn.innerHTML;
-
-            statusDiv.classList.add('d-none');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
-            btn.disabled = true;
-
-            fetch('<?php echo APP_URL; ?>admin/ajax/upload-feedback.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    statusDiv.classList.remove('d-none', 'alert-success', 'alert-danger');
-                    if (data.success) {
-                        statusDiv.classList.add('alert-success');
-                        statusDiv.innerHTML = '<i class="fas fa-check-circle me-1"></i> ' + data
-                            .message;
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1200);
-                    } else {
-                        statusDiv.classList.add('alert-danger');
-                        statusDiv.innerHTML = '<i class="fas fa-circle-exclamation me-1"></i> ' +
-                            data.message;
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }
-                })
-                .catch(() => {
-                    statusDiv.classList.remove('d-none', 'alert-success');
-                    statusDiv.classList.add('alert-danger');
-                    statusDiv.innerHTML =
-                        '<i class="fas fa-circle-exclamation me-1"></i> Kesalahan jaringan.';
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
+            if (action === 'selesai') {
+                var ket = keteranganInput.value.trim();
+                if (!ket) {
+                    e.preventDefault();
+                    alert('Keterangan wajib diisi untuk menyelesaikan laporan!');
+                    keteranganInput.focus();
+                    return false;
+                }
+            }
+            var labels = {
+                'verifikasi': 'memverifikasi',
+                'tindak_lanjut': 'melanjutkan ke tindak lanjut',
+                'selesai': 'menyelesaikan'
+            };
+            if (!confirm('Yakin ingin ' + (labels[action] || 'mengupdate') + ' laporan ini?')) {
+                e.preventDefault();
+                return false;
+            }
         });
     }
 });
+
+/* ============================================
+   UPLOAD FEEDBACK — GLOBAL FUNCTION
+   ============================================ */
+function handleUploadFeedback(e, form) {
+    e.preventDefault();
+    console.log('[UPLOAD] Handler triggered');
+
+    var modalBody = form.querySelector('.modal-body');
+    var statusDiv = document.getElementById('uploadFeedbackStatus');
+
+    if (!statusDiv && modalBody) {
+        console.log('[UPLOAD] statusDiv null, bikin baru...');
+        statusDiv = document.createElement('div');
+        statusDiv.id = 'uploadFeedbackStatus';
+        statusDiv.className = 'alert d-none';
+        modalBody.appendChild(statusDiv);
+    }
+
+    var btn = document.getElementById('btnUploadFeedback');
+    if (!btn) {
+        btn = form.querySelector('button[type="submit"]');
+    }
+
+    if (!statusDiv) {
+        alert('Gagal bikin element status');
+        return false;
+    }
+    if (!btn) {
+        alert('Tombol upload gak ketemu');
+        return false;
+    }
+
+    var formData = new FormData(form);
+    var originalText = btn.innerHTML;
+
+    statusDiv.classList.add('d-none');
+    statusDiv.classList.remove('alert-success', 'alert-danger');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
+    btn.disabled = true;
+
+    fetch('<?php echo APP_URL; ?>admin/ajax/upload-feedback.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(text => {
+            console.log('[UPLOAD] RAW RESPONSE:', text);
+
+            var data;
+            try {
+                data = JSON.parse(text);
+            } catch (err) {
+                statusDiv.classList.remove('d-none');
+                statusDiv.classList.add('alert-danger');
+                statusDiv.innerHTML =
+                    '<i class="fas fa-circle-exclamation me-1"></i> Server error (bukan JSON): <br><pre style="font-size:.7rem;margin:4px 0 0;white-space:pre-wrap">' +
+                    text.substring(0, 300) + '</pre>';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            statusDiv.classList.remove('d-none');
+            if (data.success) {
+                statusDiv.classList.add('alert-success');
+                statusDiv.innerHTML = '<i class="fas fa-check-circle me-1"></i> ' + data.message;
+                setTimeout(() => {
+                    location.reload();
+                }, 1200);
+            } else {
+                statusDiv.classList.add('alert-danger');
+                statusDiv.innerHTML = '<i class="fas fa-circle-exclamation me-1"></i> ' + data.message;
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error('[UPLOAD] Fetch error:', err);
+            statusDiv.classList.remove('d-none');
+            statusDiv.classList.add('alert-danger');
+            statusDiv.innerHTML = '<i class="fas fa-circle-exclamation me-1"></i> Kesalahan jaringan: ' + err
+                .message;
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+
+    return false;
+}
 
 function deleteFeedback(id) {
     if (!confirm('Yakin ingin menghapus file feedback ini?')) return;

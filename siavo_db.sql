@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 23 Sep 2026 pada 08.14
+-- Waktu pembuatan: 23 Sep 2026 pada 09.36
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -47,8 +47,7 @@ INSERT INTO `artikel` (`id`, `judul`, `konten`, `kategori_info`, `created_at`) V
 (5, 'Panduan Upload Bukti Pendukung', '<p>Bukti pendukung adalah kunci utama agar laporanmu tidak ditolak.</p>\r\n\r\n<h4>Format yang diterima</h4>\r\n<ul>\r\n<li>PDF (maks 2 MB)</li>\r\n<li>JPG / JPEG (maks 2 MB)</li>\r\n<li>PNG (maks 2 MB)</li>\r\n</ul>\r\n\r\n<h4>Tips kompres file</h4>\r\n<p>Kalau ukuran file melebihi 2 MB, gunakan tool kompres online atau screenshot ulang dengan resolusi lebih rendah.</p>', 'panduan', '2026-09-11 09:35:17'),
 (8, 'Apakah Identitas Saya Terlindungi?', '<p>Ya. Identitas pelapor hanya diketahui oleh admin SIAVO yang menangani laporan tersebut.</p>\r\n\r\n<h4>Yang dilihat publik</h4>\r\n<p>Hanya statistik angka — bukan isi laporan atau identitas pelapor.</p>\r\n\r\n<h4>Yang dilihat admin</h4>\r\n<p>Admin bisa melihat identitas lengkap untuk keperluan verifikasi dan tindak lanjut.</p>\r\n\r\n<div class=\"note\">Kami tidak pernah membagikan identitas pelapor ke pihak ketiga tanpa izin.</div>', 'faq', '2026-09-15 09:35:17'),
 (9, 'Berapa Lama Laporan Saya Diproses?', '<p>Rata-rata laporan diverifikasi dalam 7 hari kerja sejak diajukan.</p>\r\n\r\n<h4>Kalau lebih dari 7 hari</h4>\r\n<p>Cek status di menu <strong>Laporan Saya</strong>. Kalau status masih \"Pengajuan\" setelah 7 hari, hubungi admin via kontak yang tertera.</p>\r\n\r\n<h4>Kalau stuck di \"Tindak Lanjut\"</h4>\r\n<p>Biasanya karena menunggu respons dari unit kampus terkait. Admin akan update keterangan di timeline.</p>', 'faq', '2026-09-09 09:35:17'),
-(10, 'Bagaimana Kalau Lupa Nomor Tiket?', '<p>Masuk ke akunmu, buka menu <strong>Laporan Saya</strong>. Semua laporan beserta nomor tiketnya ada di sana.</p>\r\n\r\n<h4>Kalau akun juga lupa</h4>\r\n<p>Hubungi admin SIAVO dengan menyebutkan NIM dan nama lengkap. Admin akan membantu pencarian.</p>', 'faq', '2026-09-01 09:35:17'),
-(11, 'Hari Pendidikan Nasional', '<h4>hgfhgfhfdfdhfhfygf</h4><div><p><ol><li>yfdhgdhyfjfjghj</li><li>jguuyttuytuy</li><li>yfyfytyfytfty</li></ol><h4>,mndkjsahdkjsahdhaskd</h4><div><p><ol><li>lsadkjhasdkhasdkha</li><li>kasjdashdiuashd</li><li>jasgdasgsduygd</li></ol><div><div class=\"note\"><strong>Catatan:</strong>&nbsp;pukimay</div><p><br></p><p>dkasjdjkagdjasgdjasgdjasgdjasd</p><p>asdjkgasuydgasudguasgdsad</p><p>askdguaystdiusatydasd</p></div></p></div></p></div>', 'beasiswa', '2026-09-22 05:08:33');
+(10, 'Bagaimana Kalau Lupa Nomor Tiket?', '<p>Masuk ke akunmu, buka menu <strong>Laporan Saya</strong>. Semua laporan beserta nomor tiketnya ada di sana.</p>\r\n\r\n<h4>Kalau akun juga lupa</h4>\r\n<p>Hubungi admin SIAVO dengan menyebutkan NIM dan nama lengkap. Admin akan membantu pencarian.</p>', 'faq', '2026-09-01 09:35:17');
 
 -- --------------------------------------------------------
 
@@ -78,6 +77,20 @@ CREATE TABLE `kategori` (
   `nama_kategori` varchar(100) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `kategori`
+--
+
+INSERT INTO `kategori` (`id`, `nama_kategori`, `created_at`) VALUES
+(1, 'Akademik', '2026-09-23 06:26:23'),
+(2, 'Administrasi Kampus', '2026-09-23 06:26:23'),
+(3, 'Sarana dan Prasarana', '2026-09-23 06:26:23'),
+(4, 'Pelayanan Dosen dan Tendik', '2026-09-23 06:26:23'),
+(5, 'Beasiswa dan UKT', '2026-09-23 06:26:23'),
+(6, 'Organisasi Kemahasiswaan', '2026-09-23 06:26:23'),
+(7, 'Perundungan/Pelanggaran Hak Mahasiswa', '2026-09-23 06:26:23'),
+(8, 'Layanan Umum Lainnya', '2026-09-23 06:26:23');
 
 -- --------------------------------------------------------
 
@@ -149,9 +162,7 @@ CREATE TABLE `pengumuman` (
 --
 
 INSERT INTO `pengumuman` (`id`, `judul`, `isi`, `created_by`, `created_at`) VALUES
-(1, 'SIAVO Resmi Diluncurkan!', 'Sistem Informasi Aspirasi dan Advokasi Online (SIAVO) resmi diluncurkan untuk memfasilitasi mahasiswa dalam menyampaikan aspirasi dan pengajuan advokasi.', 1, '2026-06-17 21:16:20'),
-(2, 'asdfghjkl', 'ececrvtvtvntvrvf', 1, '2026-09-22 05:05:40'),
-(3, 'asdfghjkl', 'ececrvtvtvntvrvf', 1, '2026-09-22 05:06:16');
+(1, 'SIAVO Resmi Diluncurkan!', 'Sistem Informasi Aspirasi dan Advokasi Online (SIAVO) resmi diluncurkan untuk memfasilitasi mahasiswa dalam menyampaikan aspirasi dan pengajuan advokasi.', 1, '2026-06-17 21:16:20');
 
 -- --------------------------------------------------------
 
@@ -263,7 +274,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT untuk tabel `artikel`
 --
 ALTER TABLE `artikel`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT untuk tabel `dokumen_pendukung`
@@ -275,7 +286,7 @@ ALTER TABLE `dokumen_pendukung`
 -- AUTO_INCREMENT untuk tabel `kategori`
 --
 ALTER TABLE `kategori`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT untuk tabel `kegiatan`
@@ -293,7 +304,7 @@ ALTER TABLE `laporan`
 -- AUTO_INCREMENT untuk tabel `pengumuman`
 --
 ALTER TABLE `pengumuman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `riwayat_status`

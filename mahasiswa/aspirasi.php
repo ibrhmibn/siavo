@@ -29,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = "Sesi tidak valid atau kadaluarsa. Silakan refresh halaman.";
     } else {
-        $kategori_id = sanitize($_POST['kategori']);
-        $judul = trim($_POST['judul'] ?? '');
-        $isi = trim($_POST['isi']);
+        $kategori_id = sanitize($_POST['kategori'] ?? '');
+        $judul       = trim($_POST['judul'] ?? '');
+        $isi         = trim($_POST['isi'] ?? '');
 
         if (empty($kategori_id)) {
             $error = "Kategori wajib dipilih.";
@@ -41,15 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "Isi aspirasi wajib diisi.";
         } else {
             $judul_safe = sanitize($judul);
-            $isi_safe = sanitize($isi);
+            $isi_safe   = sanitize($isi);
             $ticket_number = generateTicketNumber('aspirasi');
 
             $query = "INSERT INTO laporan (nomor_tiket, user_id, nama_pelapor, nim, prodi, kontak, kategori_id, judul, isi, status) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pengajuan')";
 
             $stmt = $conn->prepare($query);
+
+            // ✅ FIX: type string yang benar
+            // s = nomor_tiket, i = user_id, s = nama, s = nim, s = prodi, s = kontak,
+            // i = kategori_id, s = judul, s = isi
             $stmt->bind_param(
-                "sisssssis",
+                "sissssiss",
                 $ticket_number,
                 $user_id,
                 $user_data['nama_lengkap'],
@@ -71,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 $success = true;
             } else {
-                $error = "Terjadi kesalahan sistem. Gagal mengirim aspirasi.";
+                $error = "Terjadi kesalahan sistem. Gagal mengirim aspirasi: " . $stmt->error;
             }
             $stmt->close();
         }
@@ -171,7 +175,7 @@ include '../mahasiswa/includes/sidebar.php';
                             style="resize:none" required></textarea>
                     </div>
 
-                    <!-- Upload Dokumen -->
+                    <!-- Upload -->
                     <div style="margin-bottom:26px">
                         <label class="form-label">
                             Unggah Lampiran

@@ -56,27 +56,27 @@ function validateEmail($email) {
 function getFileUrl($path_file) {
     if (empty($path_file)) return '';
 
-    // Kalo udah URL lengkap (http/https) atau relative URL yang bener
+    // Kalo udah URL lengkap
     if (preg_match('#^https?://#i', $path_file)) {
         return $path_file;
     }
 
-    // Kalo path dari filesystem (mengandung uploads/ atau uploads\)
-    if (preg_match('#[/\\\\]uploads[/\\\\](.+)$#i', $path_file, $m)) {
-        $filename = $m[1];
-        // Deteksi apakah masuk folder feedback atau bukan
-        if (stripos($filename, 'feedback') === 0 || strpos($path_file, 'feedback') !== false) {
-            // Kalo path mentah ada folder feedback
-            if (strpos($filename, 'feedback/') === 0 || strpos($filename, 'feedback\\') === 0) {
-                $clean = preg_replace('#^feedback[/\\\\]#i', '', $filename);
-                return FEEDBACK_URL . $clean;
-            }
-        }
-        return UPLOAD_URL . $filename;
+    // Normalize separator ke forward slash
+    $normalized = str_replace('\\', '/', $path_file);
+
+    // Kalo udah relative URL yang bener (mulai dari /siavo/...)
+    if (strpos($normalized, '/siavo/uploads/') === 0) {
+        return $normalized;
     }
 
-    // Fallback: ambil nama file aja, pake UPLOAD_URL
-    return UPLOAD_URL . basename(str_replace('\\', '/', $path_file));
+    // Kalo absolute path Windows: C:/xampp/htdocs/siavo/uploads/feedback/file.pdf
+    if (preg_match('#/uploads/(.+)$#i', $normalized, $m)) {
+        $relative = $m[1]; // "feedback/file.pdf" atau "file.pdf"
+        return UPLOAD_URL . $relative;
+    }
+
+    // Fallback: ambil nama file aja
+    return UPLOAD_URL . basename($normalized);
 }
 
 // ============================================
