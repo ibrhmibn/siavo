@@ -274,11 +274,6 @@ include 'includes/header_guest.php';
                         <?php echo date('d', strtotime($k['tanggal'])); ?>
                         <small><?php echo strtoupper(date('M', strtotime($k['tanggal']))); ?></small>
                     </div>
-                    <div>
-                        <h3><?php echo htmlspecialchars($k['nama']); ?></h3>
-                        <p><?php echo ucfirst($k['tipe']); ?> · Sisa
-                            <?php echo $k['sisa']; ?>/<?php echo $k['kuota']; ?></p>
-                    </div>
                 </div>
                 <?php endforeach; endif; ?>
             </div>

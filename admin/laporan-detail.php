@@ -289,9 +289,14 @@ include '../admin/includes/sidebar.php';
                                 class="value"><?php echo date('d/m/Y H:i', strtotime($laporan['created_at'])); ?></span>
                         </div>
                     </div>
-
+                    <?php
+                    $judul_tampil = $laporan['judul'] ?? '';
+                    if (empty($judul_tampil) || $judul_tampil === '0') {
+                        $judul_tampil = mb_strimwidth(strip_tags($laporan['isi']), 0, 60, '...');
+                    }
+                    ?>
                     <div class="section-label">Judul Laporan</div>
-                    <div class="content-title-box"><?php echo htmlspecialchars($judul_tampil); ?>
+                    <div class="content-title-box"><?php echo htmlspecialchars($judul_tampil ?: '(Tanpa judul)'); ?>
                     </div>
 
                     <div class="section-label">Isi Laporan</div>

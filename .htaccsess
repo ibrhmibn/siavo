@@ -1,0 +1,66 @@
+# ============================================
+# SIAVO — Root .htaccess
+# ============================================
+
+RewriteEngine On
+
+# --------------------------------------------
+# Force HTTPS (uncomment pas hosting udah HTTPS)
+# --------------------------------------------
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# --------------------------------------------
+# Security headers
+# --------------------------------------------
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    # CSP: longgar dulu biar gak break FontAwesome, Google Fonts, Chart.js
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'self'"
+</IfModule>
+
+# --------------------------------------------
+# Disable directory listing
+# --------------------------------------------
+Options -Indexes
+
+# --------------------------------------------
+# Blokir akses langsung ke file sensitif
+# --------------------------------------------
+<FilesMatch "\.(sql|env|log|ini|md|lock|bak|old|swp|dist)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^(config|functions|auth_check)\.php$">
+    Require all denied
+</FilesMatch>
+
+# Blokir file dotfile (.git, .env, dll)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# --------------------------------------------
+# MIME types
+# --------------------------------------------
+AddType text/css .css
+AddType application/javascript .js
+AddType image/svg+xml .svg
+AddType image/webp .webp
+
+# --------------------------------------------
+# Cache file statis (opsional, tapi bagus)
+# --------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>

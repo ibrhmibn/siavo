@@ -109,11 +109,6 @@ include '../mahasiswa/includes/sidebar.php';
             </div>
             <div class="card-body">
 
-                <!-- Judul Laporan -->
-                <h3 class="detail-title" style="margin-bottom:20px">
-                    <?php echo htmlspecialchars($judul_tampil); ?>
-                </h3>
-
                 <!-- Identitas Pelapor -->
                 <h4 class="detail-section-title">Informasi Pelapor</h4>
                 <div class="detail-list">
@@ -174,6 +169,11 @@ include '../mahasiswa/includes/sidebar.php';
                 </div>
 
                 <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+
+                <h4 class="detail-section-title">Judul Laporan</h4>
+                <div class="content-block">
+                    <?php echo nl2br(htmlspecialchars($laporan['judul'])); ?>
+                </div>
 
                 <!-- Isi Laporan -->
                 <h4 class="detail-section-title">Isi Laporan</h4>
