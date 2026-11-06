@@ -13,7 +13,7 @@ require_once 'includes/functions.php';
 // ===== Kategori =====
 $semua_kategori = ['sop', 'panduan', 'beasiswa', 'faq'];
 $kategori_filter = $_GET['kategori'] ?? 'sop';
-if (!in_array($kategori_filter, $semua_kategori)) $kategori_filter = 'sop';
+if (!in_array($kategori_filter, $semua_kategori, true)) $kategori_filter = 'sop';
 
 $kategori_meta = [
     'sop'      => ['label' => 'SOP Advokasi',      'icon' => 'fa-clipboard-list',  'desc' => 'Prosedur resmi pengajuan, verifikasi, dan tindak lanjut aspirasi mahasiswa.'],
@@ -31,27 +31,30 @@ $r = $stmt->get_result();
 while ($row = $r->fetch_assoc()) $artikel[] = $row;
 $stmt->close();
 
-// ===== Count per kategori =====
-$jumlah_per_kategori = [];
-foreach ($semua_kategori as $k) {
-    $ks = $conn->real_escape_string($k);
-    $res = $conn->query("SELECT COUNT(*) c FROM artikel WHERE kategori_info='$ks'");
-    $jumlah_per_kategori[$k] = $res ? (int)$res->fetch_assoc()['c'] : 0;
+// ===== Count per kategori (Single Query) =====
+$jumlah_per_kategori = array_fill_keys($semua_kategori, 0);
+$stmt = $conn->prepare("SELECT kategori_info, COUNT(*) AS c FROM artikel GROUP BY kategori_info");
+$stmt->execute();
+$r = $stmt->get_result();
+while ($row = $r->fetch_assoc()) {
+    if (isset($jumlah_per_kategori[$row['kategori_info']])) {
+        $jumlah_per_kategori[$row['kategori_info']] = (int) $row['c'];
+    }
 }
+$stmt->close();
 
-$conn->close();
 include 'includes/header_guest.php';
 ?>
 <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/docs.css">
 <?php
 
-// ===== Pisah featured & sisanya =====
 $featured = !empty($artikel) ? $artikel[0] : null;
 $sisanya  = count($artikel) > 1 ? array_slice($artikel, 1) : [];
 
-// Helper: estimasi waktu baca (200 kata/menit)
-function estimasiBaca($teks) {
-    return max(1, (int)ceil(str_word_count(strip_tags($teks)) / 200));
+if (!function_exists('estimasiBaca')) {
+    function estimasiBaca($teks) {
+        return max(1, (int)ceil(str_word_count(strip_tags($teks)) / 200));
+    }
 }
 ?>
 
@@ -114,10 +117,7 @@ function estimasiBaca($teks) {
 
             <?php if (!empty($artikel)): ?>
 
-            <!-- ============================================== -->
-            <!-- FEATURED ARTICLE — artikel terbaru             -->
-            <!-- Konten dirender sebagai HTML (bukan plain text) -->
-            <!-- ============================================== -->
+            <!-- FEATURED ARTICLE -->
             <?php if ($featured): ?>
             <article class="featured" id="artikel-1" aria-labelledby="judul-1">
                 <span class="tag"><?php echo strtoupper($kategori_filter); ?></span>
@@ -140,9 +140,7 @@ function estimasiBaca($teks) {
             </article>
             <?php endif; ?>
 
-            <!-- ============================================== -->
-            <!-- LIST ARTIKEL LAINNYA                           -->
-            <!-- ============================================== -->
+            <!-- LIST ARTIKEL LAINNYA -->
             <?php if (!empty($sisanya)): ?>
             <div class="sep" role="separator"><span>Artikel lainnya</span></div>
             <div class="article-list">
@@ -216,6 +214,8 @@ function estimasiBaca($teks) {
     </div>
 </div>
 
-<?php include 'includes/footer_guest.php'; ?>
+<?php include 'includes/footer_guest.php'; 
+if(isset($conn)) { $conn->close(); }
+?>
 
 <script src="<?php echo APP_URL; ?>assets/js/docs.js" defer></script>

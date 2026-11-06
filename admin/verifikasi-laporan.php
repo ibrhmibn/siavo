@@ -3,7 +3,7 @@ $page_title = 'Verifikasi Laporan';
 
 $status_filter = $_GET['status'] ?? 'semua';
 $allowed_status = ['semua', 'pengajuan', 'verifikasi', 'tindak_lanjut', 'selesai'];
-if (!in_array($status_filter, $allowed_status)) {
+if (!in_array($status_filter, $allowed_status, true)) {
     $status_filter = 'semua';
 }
 
@@ -29,53 +29,65 @@ if (getUserRole() != 'admin') {
     redirect('../index.php');
 }
 
-if ($status_filter == 'semua') {
-    $sql = "SELECT l.*, k.nama_kategori, u.nama_lengkap as pelapor, u.nim as nim_pelapor 
-            FROM laporan l 
-            LEFT JOIN kategori k ON l.kategori_id = k.id 
-            LEFT JOIN users u ON l.user_id = u.id 
+// ============================================
+// Ambil laporan (prepared statement)
+// ============================================
+$laporan = [];
+
+if ($status_filter === 'semua') {
+    $sql = "SELECT l.*, k.nama_kategori,
+                   u.nama_lengkap AS pelapor, u.nim AS nim_pelapor
+            FROM laporan l
+            LEFT JOIN kategori k ON l.kategori_id = k.id
+            LEFT JOIN users u ON l.user_id = u.id
             ORDER BY l.created_at DESC";
     $stmt = $conn->prepare($sql);
-    $stmt->execute();
 } else {
-    $sql = "SELECT l.*, k.nama_kategori, u.nama_lengkap as pelapor, u.nim as nim_pelapor 
-            FROM laporan l 
-            LEFT JOIN kategori k ON l.kategori_id = k.id 
-            LEFT JOIN users u ON l.user_id = u.id 
-            WHERE l.status = ? 
+    $sql = "SELECT l.*, k.nama_kategori,
+                   u.nama_lengkap AS pelapor, u.nim AS nim_pelapor
+            FROM laporan l
+            LEFT JOIN kategori k ON l.kategori_id = k.id
+            LEFT JOIN users u ON l.user_id = u.id
+            WHERE l.status = ?
             ORDER BY l.created_at DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $status_filter);
+}
+
+if ($stmt) {
     $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $laporan[] = $row;
+    }
+    $stmt->close();
+} else {
+    error_log('verifikasi-laporan.php query error: ' . $conn->error);
 }
 
-$result = $stmt->get_result();
-$laporan = [];
-while ($row = $result->fetch_assoc()) {
-    $laporan[] = $row;
-}
-$stmt->close();
-
+// ============================================
+// Statistik (single query)
+// ============================================
 $stats = [
-    'total' => 0,
-    'pengajuan' => 0,
-    'verifikasi' => 0,
+    'total'         => 0,
+    'pengajuan'     => 0,
+    'verifikasi'    => 0,
     'tindak_lanjut' => 0,
-    'selesai' => 0
+    'selesai'       => 0,
 ];
 
-$queries = [
-    'total' => "SELECT COUNT(*) as count FROM laporan",
-    'pengajuan' => "SELECT COUNT(*) as count FROM laporan WHERE status = 'pengajuan'",
-    'verifikasi' => "SELECT COUNT(*) as count FROM laporan WHERE status = 'verifikasi'",
-    'tindak_lanjut' => "SELECT COUNT(*) as count FROM laporan WHERE status = 'tindak_lanjut'",
-    'selesai' => "SELECT COUNT(*) as count FROM laporan WHERE status = 'selesai'"
-];
-foreach ($queries as $key => $sql) {
-    $result = $conn->query($sql);
-    if ($result) {
-        $row = $result->fetch_assoc();
-        $stats[$key] = $row['count'];
+$r = $conn->query("
+    SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'pengajuan'     THEN 1 ELSE 0 END) AS pengajuan,
+        SUM(CASE WHEN status = 'verifikasi'    THEN 1 ELSE 0 END) AS verifikasi,
+        SUM(CASE WHEN status = 'tindak_lanjut' THEN 1 ELSE 0 END) AS tindak_lanjut,
+        SUM(CASE WHEN status = 'selesai'       THEN 1 ELSE 0 END) AS selesai
+    FROM laporan
+");
+if ($r && $row = $r->fetch_assoc()) {
+    foreach ($stats as $k => $v) {
+        $stats[$k] = (int) $row[$k];
     }
 }
 
@@ -91,7 +103,8 @@ include '../admin/includes/sidebar.php';
         </div>
         <div class="text-muted small d-flex align-items-center gap-2 mt-2 mt-md-0">
             <i class="fas fa-filter"></i>
-            <span>Filter: <strong><?php echo ucfirst(str_replace('_', ' ', $status_filter)); ?></strong></span>
+            <span>Filter:
+                <strong><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $status_filter))); ?></strong></span>
         </div>
     </div>
 
@@ -171,9 +184,9 @@ include '../admin/includes/sidebar.php';
                             Tidak ada laporan dengan status ini
                         </td>
                     </tr>
-                    <?php else: 
+                    <?php else:
                         $no = 1;
-                        foreach ($laporan as $l): 
+                        foreach ($laporan as $l):
                     ?>
                     <tr>
                         <td class="text-muted" style="text-align:center"><?php echo $no++; ?></td>
@@ -181,14 +194,14 @@ include '../admin/includes/sidebar.php';
                         </td>
                         <td>
                             <div class="cell-name"><?php echo htmlspecialchars($l['pelapor'] ?? 'Anonim'); ?></div>
-                            <div class="cell-nim"><?php echo htmlspecialchars($l['nim']); ?></div>
+                            <div class="cell-nim"><?php echo htmlspecialchars($l['nim_pelapor'] ?? '-'); ?></div>
                         </td>
                         <td><?php echo htmlspecialchars($l['nama_kategori'] ?? '-'); ?></td>
                         <td><?php echo getStatusBadgeModern($l['status']); ?></td>
                         <td><?php echo getPriorityBadgeModern($l['prioritas']); ?></td>
                         <td class="text-muted small"><?php echo date('d/m/Y', strtotime($l['created_at'])); ?></td>
                         <td class="text-center">
-                            <a href="laporan-detail.php?id=<?php echo $l['id']; ?>" class="btn-icon-modern"
+                            <a href="laporan-detail.php?id=<?php echo (int) $l['id']; ?>" class="btn-icon-modern"
                                 title="Detail Laporan">
                                 <i class="fas fa-eye"></i>
                             </a>

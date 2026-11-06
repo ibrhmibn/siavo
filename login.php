@@ -12,26 +12,38 @@ if (isLoggedIn()) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = mysqli_real_escape_string($conn, trim($_POST['username']));
-    $password = $_POST['password'];
+    $username = sanitize($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    $r = $conn->query("SELECT id, username, password, nama_lengkap, role FROM users WHERE username = '$username'");
-    if ($r && $r->num_rows > 0) {
-        $u = $r->fetch_assoc();
-        if (password_verify($password, $u['password'])) {
-            $_SESSION['user_id']   = $u['id'];
-            $_SESSION['user_name'] = $u['nama_lengkap'];
-            $_SESSION['user_role'] = $u['role'];
-            redirect($u['role'] === 'mahasiswa' ? 'mahasiswa/dashboard.php' : 'admin/dashboard.php');
-        } else {
-            $error = 'Password salah!';
-        }
+    if (empty($username) || empty($password)) {
+        $error = 'Username dan password wajib diisi.';
     } else {
-        $error = 'Username tidak ditemukan!';
+        $stmt = $conn->prepare("SELECT id, username, password, nama_lengkap, role FROM users WHERE username = ? LIMIT 1");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $r = $stmt->get_result();
+
+        if ($r && $r->num_rows > 0) {
+            $u = $r->fetch_assoc();
+            if (password_verify($password, $u['password'])) {
+                session_regenerate_id(true);
+                $_SESSION['user_id']   = $u['id'];
+                $_SESSION['user_name'] = $u['nama_lengkap'];
+                $_SESSION['user_role'] = $u['role'];
+                
+                $stmt->close();
+                $conn->close();
+                
+                redirect($u['role'] === 'mahasiswa' ? 'mahasiswa/dashboard.php' : 'admin/dashboard.php');
+            } else {
+                $error = 'Username atau password salah.';
+            }
+        } else {
+            $error = 'Username atau password salah.';
+        }
+        $stmt->close();
     }
 }
-
-$conn->close();
 
 include 'includes/header_guest.php';
 ?>
@@ -48,7 +60,7 @@ include 'includes/header_guest.php';
             <?php if ($error): ?>
             <div class="alert alert-err">
                 <i class="fas fa-circle-exclamation"></i>
-                <span><?php echo $error; ?></span>
+                <span><?php echo escape($error); ?></span>
             </div>
             <?php endif; ?>
 
@@ -58,7 +70,7 @@ include 'includes/header_guest.php';
                     <div class="field-input">
                         <span class="ico"><i class="fas fa-user"></i></span>
                         <input type="text" id="username" name="username" placeholder="Masukkan username" required
-                            autofocus>
+                            autofocus autocomplete="username">
                     </div>
                 </div>
 
@@ -66,7 +78,8 @@ include 'includes/header_guest.php';
                     <label for="password">Password</label>
                     <div class="field-input">
                         <span class="ico"><i class="fas fa-lock"></i></span>
-                        <input type="password" id="password" name="password" placeholder="Masukkan password" required>
+                        <input type="password" id="password" name="password" placeholder="Masukkan password" required
+                            autocomplete="current-password">
                         <button type="button" class="toggle" id="togglePassword" aria-label="Lihat password">
                             <i class="fas fa-eye" id="eyeIcon"></i>
                         </button>
@@ -93,4 +106,6 @@ document.getElementById('togglePassword').addEventListener('click', function() {
 });
 </script>
 
-<?php include 'includes/footer_guest.php'; ?>
+<?php include 'includes/footer_guest.php'; 
+if(isset($conn)) { $conn->close(); }
+?>

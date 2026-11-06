@@ -1,7 +1,6 @@
 <?php
 // ========================================
 // KEGIATAN - SIAVO GUEST
-// Layout: Atlas 2026 (3-column docs)
 // ========================================
 
 $page_title  = 'Kegiatan';
@@ -12,65 +11,90 @@ require_once 'includes/functions.php';
 
 // ===== Filter =====
 $tipe_filter = $_GET['tipe'] ?? 'semua';
-if (!in_array($tipe_filter, ['semua','sema','siavo'])) $tipe_filter = 'semua';
+if (!in_array($tipe_filter, ['semua', 'sema', 'siavo'], true)) $tipe_filter = 'semua';
 
 $waktu_filter = $_GET['waktu'] ?? 'semua';
-if (!in_array($waktu_filter, ['semua','akan_datang','sudah_lewat'])) $waktu_filter = 'semua';
+if (!in_array($waktu_filter, ['semua', 'akan_datang', 'sudah_lewat'], true)) $waktu_filter = 'semua';
 
-// ===== Query =====
-$where = [];
-if ($tipe_filter !== 'semua') $where[] = "tipe = '" . $conn->real_escape_string($tipe_filter) . "'";
-if ($waktu_filter === 'akan_datang') $where[] = "tanggal >= CURDATE()";
-elseif ($waktu_filter === 'sudah_lewat') $where[] = "tanggal < CURDATE()";
-$where_sql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+// ===== Query (Prepared) =====
+$sql = "SELECT * FROM kegiatan WHERE 1=1";
+$params = [];
+$types  = "";
+
+if ($tipe_filter !== 'semua') {
+    $sql .= " AND tipe = ?";
+    $params[] = $tipe_filter;
+    $types   .= "s";
+}
+if ($waktu_filter === 'akan_datang') {
+    $sql .= " AND tanggal >= CURDATE()";
+} elseif ($waktu_filter === 'sudah_lewat') {
+    $sql .= " AND tanggal < CURDATE()";
+}
+
+$sql .= " ORDER BY (tanggal < CURDATE()) ASC, IF(tanggal >= CURDATE(), tanggal, NULL) ASC, tanggal DESC";
 
 $kegiatan = [];
-$order_sql = "ORDER BY (tanggal < CURDATE()) ASC, IF(tanggal >= CURDATE(), tanggal, NULL) ASC, tanggal DESC";
-$r = $conn->query("SELECT * FROM kegiatan $where_sql $order_sql");
-if ($r) { while ($row = $r->fetch_assoc()) $kegiatan[] = $row; }
+$stmt = $conn->prepare($sql);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$r = $stmt->get_result();
+while ($row = $r->fetch_assoc()) $kegiatan[] = $row;
+$stmt->close();
 
 // ===== Statistik =====
 $total_kegiatan = 0;
-$r = $conn->query("SELECT COUNT(*) c FROM kegiatan");
-if ($r) $total_kegiatan = (int)$r->fetch_assoc()['c'];
-
 $total_bulan_ini = 0;
-$r = $conn->query("SELECT COUNT(*) c FROM kegiatan WHERE MONTH(tanggal)=MONTH(CURDATE()) AND YEAR(tanggal)=YEAR(CURDATE())");
-if ($r) $total_bulan_ini = (int)$r->fetch_assoc()['c'];
+$r = $conn->query("SELECT 
+    COUNT(*) AS total, 
+    SUM(CASE WHEN MONTH(tanggal) = MONTH(CURDATE()) AND YEAR(tanggal) = YEAR(CURDATE()) THEN 1 ELSE 0 END) AS bulan_ini 
+    FROM kegiatan");
+if ($r && $row = $r->fetch_assoc()) {
+    $total_kegiatan  = (int) $row['total'];
+    $total_bulan_ini = (int) $row['bulan_ini'];
+}
 
-$conn->close();
 include 'includes/header_guest.php';
 ?>
 <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/docs.css">
 <?php
 
-// ===== Featured: kegiatan akan datang terdekat =====
+// ===== Featured =====
 $featured = null;
+$today = strtotime(date('Y-m-d'));
 foreach ($kegiatan as $k) {
-    if (strtotime($k['tanggal']) >= strtotime(date('Y-m-d'))) { $featured = $k; break; }
+    if (strtotime($k['tanggal']) >= $today) { $featured = $k; break; }
 }
 if (!$featured && !empty($kegiatan)) $featured = $kegiatan[0];
 
-$sisanya = array_values(array_filter($kegiatan, function ($k) use ($featured) {
-    return !$featured || $k['id'] !== $featured['id'];
-}));
-
-// Helper
-function getBulanSingkat($tanggal) {
-    $bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-    return $bulan[(int)date('n', strtotime($tanggal)) - 1];
+$sisanya = [];
+if ($featured) {
+    foreach ($kegiatan as $k) {
+        if ($k['id'] !== $featured['id']) $sisanya[] = $k;
+    }
 }
 
-// Placeholder image generator (SVG data URI)
-function placeholderKegiatan($warna, $w = 800, $h = 400) {
-    $svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$w} {$h}' preserveAspectRatio='xMidYMid slice'>"
-         . "<rect width='{$w}' height='{$h}' fill='{$warna}'/>"
-         . "<rect x='80' y='60' width='70' height='70' rx='8' fill='#ffffff' opacity='0.35' transform='rotate(45 115 95)'/>"
-         . "<rect x='300' y='210' width='120' height='120' rx='15' fill='#ffffff' opacity='0.22' transform='rotate(45 360 270)'/>"
-         . "<rect x='560' y='40' width='90' height='90' rx='11' fill='#ffffff' opacity='0.3' transform='rotate(45 605 85)'/>"
-         . "<rect x='660' y='240' width='60' height='60' rx='7' fill='#ffffff' opacity='0.4' transform='rotate(45 690 270)'/>"
-         . "</svg>";
-    return 'data:image/svg+xml;utf8,' . rawurlencode($svg);
+// Helper
+if (!function_exists('getBulanSingkat')) {
+    function getBulanSingkat($tanggal) {
+        $bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+        return $bulan[(int)date('n', strtotime($tanggal)) - 1];
+    }
+}
+
+if (!function_exists('placeholderKegiatan')) {
+    function placeholderKegiatan($warna, $w = 800, $h = 400) {
+        $svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {$w} {$h}' preserveAspectRatio='xMidYMid slice'>"
+             . "<rect width='{$w}' height='{$h}' fill='{$warna}'/>"
+             . "<rect x='80' y='60' width='70' height='70' rx='8' fill='#ffffff' opacity='0.35' transform='rotate(45 115 95)'/>"
+             . "<rect x='300' y='210' width='120' height='120' rx='15' fill='#ffffff' opacity='0.22' transform='rotate(45 360 270)'/>"
+             . "<rect x='560' y='40' width='90' height='90' rx='11' fill='#ffffff' opacity='0.3' transform='rotate(45 605 85)'/>"
+             . "<rect x='660' y='240' width='60' height='60' rx='7' fill='#ffffff' opacity='0.4' transform='rotate(45 690 270)'/>"
+             . "</svg>";
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
 }
 ?>
 
@@ -93,15 +117,14 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
 <div class="wrap">
     <div class="docs">
 
-        <!-- ============ KOLOM KIRI: FILTER ============ -->
+        <!-- KOLOM KIRI -->
         <aside class="side" aria-label="Filter kegiatan">
-
             <nav class="side-card" aria-labelledby="lbl-tipe">
                 <span class="side-label" id="lbl-tipe">Tipe</span>
                 <ul class="cat-list">
                     <?php
                     $tipe_link = function($t) use ($waktu_filter) {
-                        return 'kegiatan.php?tipe=' . $t . '&waktu=' . $waktu_filter;
+                        return 'kegiatan.php?tipe=' . urlencode($t) . '&waktu=' . urlencode($waktu_filter);
                     };
                     ?>
                     <li><a href="<?php echo $tipe_link('semua'); ?>"
@@ -121,7 +144,7 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
                 <ul class="cat-list">
                     <?php
                     $waktu_link = function($w) use ($tipe_filter) {
-                        return 'kegiatan.php?tipe=' . $tipe_filter . '&waktu=' . $w;
+                        return 'kegiatan.php?tipe=' . urlencode($tipe_filter) . '&waktu=' . urlencode($w);
                     };
                     ?>
                     <li><a href="<?php echo $waktu_link('semua'); ?>"
@@ -143,7 +166,7 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
             </div>
         </aside>
 
-        <!-- ============ KOLOM TENGAH: MAIN ============ -->
+        <!-- KOLOM TENGAH -->
         <main id="konten">
             <div class="main-head">
                 <div>
@@ -165,14 +188,11 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
 
             <?php if (!empty($kegiatan)): ?>
 
-            <!-- ============================================== -->
-            <!-- FEATURED — kegiatan akan datang terdekat       -->
-            <!-- ============================================== -->
             <?php if ($featured):
-                    $is_upcoming = strtotime($featured['tanggal']) >= strtotime(date('Y-m-d'));
+                    $is_upcoming = strtotime($featured['tanggal']) >= $today;
                     $img = !empty($featured['gambar'])
-                        ? APP_URL . 'assets/img/kegiatan/' . $featured['gambar']
-                        : placeholderKegiatan($featured['tipe'] === 'sema' ? '#4e0009' : '#1d4ed8', 800, 280);
+                        ? APP_URL . 'assets/img/kegiatan/' . rawurlencode($featured['gambar'])
+                        : placeholderKegiatan($featured['tipe'] === 'sema' ? '#1E3A8A' : '#D97706', 800, 280); // Biru UIN / Kuning UIN
                 ?>
             <article class="k-featured" id="kegiatan-1" aria-labelledby="k-judul-1">
                 <div class="media">
@@ -211,18 +231,15 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
             </article>
             <?php endif; ?>
 
-            <!-- ============================================== -->
-            <!-- LIST KEGIATAN LAINNYA                          -->
-            <!-- ============================================== -->
             <?php if (!empty($sisanya)): ?>
             <div class="sep" role="separator"><span>Kegiatan lainnya</span></div>
             <div class="k-grid">
                 <?php foreach ($sisanya as $i => $k):
                             $idx = $i + 2;
-                            $sudah_lewat = strtotime($k['tanggal']) < strtotime(date('Y-m-d'));
+                            $sudah_lewat = strtotime($k['tanggal']) < $today;
                             $img = !empty($k['gambar'])
-                                ? APP_URL . 'assets/img/kegiatan/' . $k['gambar']
-                                : placeholderKegiatan($k['tipe'] === 'sema' ? '#4e0009' : '#1d4ed8', 400, 160);
+                                ? APP_URL . 'assets/img/kegiatan/' . rawurlencode($k['gambar'])
+                                : placeholderKegiatan($k['tipe'] === 'sema' ? '#1E3A8A' : '#D97706', 400, 160);
                         ?>
                 <article class="k-card <?php echo $sudah_lewat ? 'is-done' : ''; ?>" id="kegiatan-<?php echo $idx; ?>"
                     aria-labelledby="k-judul-<?php echo $idx; ?>">
@@ -244,8 +261,9 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
                             </time>
                             <?php endif; ?>
                         </p>
-                        <h3 id="k-judul-<?php echo $idx; ?>"><a
-                                href="<?php echo APP_URL; ?>kegiatan_detail.php?id=<?php echo $k['id']; ?>"><?php echo htmlspecialchars($k['nama']); ?></a>
+                        <h3 id="k-judul-<?php echo $idx; ?>">
+                            <a
+                                href="<?php echo APP_URL; ?>kegiatan_detail.php?id=<?php echo (int)$k['id']; ?>"><?php echo htmlspecialchars($k['nama']); ?></a>
                         </h3>
                         <p><?php echo htmlspecialchars(mb_strimwidth($k['deskripsi'], 0, 140, '...')); ?></p>
                     </div>
@@ -262,7 +280,6 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
             </div>
             <?php endif; ?>
 
-            <!-- CTA mobile -->
             <div class="cta-box cta-mobile">
                 <div class="cta-icon" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></div>
                 <p>Ada kegiatan yang mau diusulkan?</p>
@@ -279,7 +296,7 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
             <?php endif; ?>
         </main>
 
-        <!-- ============ KOLOM KANAN: INFO PANEL ============ -->
+        <!-- KOLOM KANAN -->
         <?php if (!empty($kegiatan)): ?>
         <aside class="rail" aria-label="Ringkasan dan daftar kegiatan">
             <section class="side-card" aria-labelledby="lbl-stat">
@@ -312,6 +329,8 @@ function placeholderKegiatan($warna, $w = 800, $h = 400) {
     </div>
 </div>
 
-<?php include 'includes/footer_guest.php'; ?>
+<?php include 'includes/footer_guest.php'; 
+if(isset($conn)) { $conn->close(); }
+?>
 
 <script src="<?php echo APP_URL; ?>assets/js/docs.js" defer></script>

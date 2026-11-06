@@ -9,25 +9,19 @@ $page_active = 'beranda';
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
 
-// ===== Ambil Data Statistik =====
-$stats = [
-    'total'    => 0,
-    'selesai'  => 0,
-    'diproses' => 0,
-];
+// ===== Ambil Data Statistik (Single Query) =====
+$stats = ['total' => 0, 'selesai' => 0, 'diproses' => 0];
 
-$queries = [
-    'total'    => "SELECT COUNT(*) as count FROM laporan",
-    'selesai'  => "SELECT COUNT(*) as count FROM laporan WHERE status = 'selesai'",
-    'diproses' => "SELECT COUNT(*) as count FROM laporan WHERE status IN ('pengajuan', 'verifikasi', 'tindak_lanjut')",
-];
-
-foreach ($queries as $key => $sql) {
-    $result = $conn->query($sql);
-    if ($result) {
-        $row = $result->fetch_assoc();
-        $stats[$key] = $row['count'];
-    }
+$sql = "SELECT 
+    COUNT(*) AS total,
+    SUM(CASE WHEN status = 'selesai' THEN 1 ELSE 0 END) AS selesai,
+    SUM(CASE WHEN status IN ('pengajuan','verifikasi','tindak_lanjut') THEN 1 ELSE 0 END) AS diproses
+FROM laporan";
+$r = $conn->query($sql);
+if ($r && $row = $r->fetch_assoc()) {
+    $stats['total']    = (int) $row['total'];
+    $stats['selesai']  = (int) $row['selesai'];
+    $stats['diproses'] = (int) $row['diproses'];
 }
 
 // ===== Ambil Pengumuman Terbaru =====
@@ -50,7 +44,6 @@ if ($result) {
     }
 }
 
-$conn->close();
 include 'includes/header_guest.php';
 ?>
 
@@ -259,8 +252,7 @@ include 'includes/header_guest.php';
                 <div class="ann <?php echo $i === 0 ? 'pin' : ''; ?>">
                     <time><?php echo $i === 0 ? 'Disematkan · ' : ''; ?><?php echo date('d F Y', strtotime($p['created_at'])); ?></time>
                     <h3 style="margin-top:6px"><?php echo htmlspecialchars($p['judul']); ?></h3>
-                    <p><?php echo nl2br(htmlspecialchars(substr($p['isi'], 0, 160))); ?><?php echo strlen($p['isi']) > 160 ? '...' : ''; ?>
-                    </p>
+                    <p><?php echo nl2br(htmlspecialchars(mb_strimwidth($p['isi'], 0, 160, '...'))); ?></p>
                 </div>
                 <?php endforeach; endif; ?>
             </div>
@@ -273,6 +265,9 @@ include 'includes/header_guest.php';
                     <div class="date">
                         <?php echo date('d', strtotime($k['tanggal'])); ?>
                         <small><?php echo strtoupper(date('M', strtotime($k['tanggal']))); ?></small>
+                    </div>
+                    <div>
+                        <h3><?php echo htmlspecialchars($k['nama']); ?></h3>
                     </div>
                 </div>
                 <?php endforeach; endif; ?>
@@ -292,7 +287,9 @@ include 'includes/header_guest.php';
     </div>
 </div>
 
-<?php include 'includes/footer_guest.php'; ?>
+<?php include 'includes/footer_guest.php'; 
+if(isset($conn)) { $conn->close(); } 
+?>
 
 <script>
 /* ===== SIMULASI TRACKING ===== */

@@ -1,7 +1,4 @@
-/* ============================================
-   SIAVO — Reusable File Upload Component
-   Compact, no icon, responsive
-   ============================================ */
+
 
 .file-upload{
   display:flex;
@@ -87,12 +84,12 @@
 
 /* Dark mode */
 :root[data-theme="dark"] .file-upload{
-  border-color:#4d282c;
-  background:#2a171a;
+  border-color:#2a3b5c;
+  background:#1e294b;
 }
 :root[data-theme="dark"] .file-upload:hover{
-  border-color:#ff3b4f;
-  background:#3a0d14;
+  border-color:#4F6BFF;
+  background:#1e293b;
 }
 :root[data-theme="dark"] .file-upload.has-file{
   border-color:#4ade80;

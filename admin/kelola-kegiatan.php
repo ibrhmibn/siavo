@@ -10,15 +10,22 @@ if (getUserRole() != 'admin') {
     redirect('../index.php');
 }
 
-// AUTO-CLEANUP pas buka halaman ini (max 1x per 6 jam)
-$auto_deleted = autoCleanupKegiatan();
-
 $error = '';
 $success = '';
 
-// Folder upload gambar
-$IMG_DIR = $_SERVER['DOCUMENT_ROOT'] . '/siavo/assets/img/kegiatan/';
-$IMG_URL = APP_URL . 'assets/img/kegiatan/';
+// ============================================
+// FOLDER UPLOAD GAMBAR
+// ============================================
+if (defined('KEGIATAN_IMG_DIR')) {
+    $IMG_DIR = KEGIATAN_IMG_DIR;
+} else {
+    $IMG_DIR = $_SERVER['DOCUMENT_ROOT'] . '/assets/img/kegiatan/';
+}
+if (defined('KEGIATAN_IMG_URL')) {
+    $IMG_URL = KEGIATAN_IMG_URL;
+} else {
+    $IMG_URL = APP_URL . 'assets/img/kegiatan/';
+}
 
 // Buat folder kalau belum ada
 if (!is_dir($IMG_DIR)) {
@@ -34,21 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $action = $_POST['action'] ?? 'save';
 
-        // ---- CLEANUP MANUAL ----
-        if ($action === 'cleanup') {
-            $deleted = cleanupExpiredKegiatan();
-            if ($deleted > 0) {
-                $success = $deleted . ' kegiatan lama berhasil dihapus.';
-            } else {
-                $success = 'Tidak ada kegiatan lama yang perlu dihapus.';
-            }
-        }
-
         // ---- DELETE (single) ----
-        elseif ($action === 'delete') {
+        if ($action === 'delete') {
             $id = intval($_POST['delete_id'] ?? 0);
             if ($id > 0) {
-                $stmt = $conn->prepare("SELECT gambar FROM kegiatan WHERE id = ?");
+                $stmt = $conn->prepare("SELECT gambar FROM kegiatan WHERE id = ? LIMIT 1");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
                 $row = $stmt->get_result()->fetch_assoc();
@@ -70,40 +67,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // ---- SAVE (insert/update) ----
         else {
-            $nama       = sanitize($_POST['nama'] ?? '');
-            $deskripsi  = trim($_POST['deskripsi'] ?? '');
-            $tanggal    = $_POST['tanggal'] ?? '';
-            $waktu      = $_POST['waktu'] ?? null;
-            $tipe       = in_array($_POST['tipe'] ?? '', ['sema','siavo']) ? $_POST['tipe'] : 'sema';
-            $edit_id    = intval($_POST['edit_id'] ?? 0);
+            $nama      = sanitize($_POST['nama'] ?? '');
+            $deskripsi = trim($_POST['deskripsi'] ?? '');
+            $tanggal   = $_POST['tanggal'] ?? '';
+            $waktu     = $_POST['waktu'] ?? null;
+            $tipe      = in_array($_POST['tipe'] ?? '', ['sema', 'siavo'], true) ? $_POST['tipe'] : 'sema';
+            $edit_id   = intval($_POST['edit_id'] ?? 0);
 
             if ($nama === '' || $tanggal === '') {
                 $error = 'Nama dan tanggal wajib diisi.';
             } else {
                 $gambar_baru = null;
-                $has_upload = isset($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK;
+                $has_upload  = isset($_FILES['gambar']) && $_FILES['gambar']['error'] === UPLOAD_ERR_OK;
 
                 if ($has_upload) {
-                    $ext = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
-                    $allowed = ['jpg','jpeg','png','webp'];
+                    $ext     = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
+                    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
-                    if (!in_array($ext, $allowed)) {
+                    if (!in_array($ext, $allowed, true)) {
                         $error = 'Format gambar tidak valid. Gunakan JPG, PNG, atau WEBP.';
                     } elseif ($_FILES['gambar']['size'] > 3 * 1024 * 1024) {
                         $error = 'Ukuran gambar maksimal 3 MB.';
                     } else {
                         $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                        $mime = finfo_file($finfo, $_FILES['gambar']['tmp_name']);
+                        $mime  = finfo_file($finfo, $_FILES['gambar']['tmp_name']);
                         finfo_close($finfo);
 
                         $allowed_mimes = ['image/jpeg', 'image/png', 'image/webp'];
-                        if (!in_array($mime, $allowed_mimes)) {
+                        if (!in_array($mime, $allowed_mimes, true)) {
                             $error = 'File bukan gambar yang valid.';
                         } else {
-                            $gambar_baru = 'kegiatan_' . uniqid() . '_' . time() . '.' . $ext;
+                            $gambar_baru = 'kegiatan_' . bin2hex(random_bytes(8)) . '.' . $ext;
                             if (!move_uploaded_file($_FILES['gambar']['tmp_name'], $IMG_DIR . $gambar_baru)) {
                                 $error = 'Gagal mengupload gambar.';
                                 $gambar_baru = null;
+                            } else {
+                                @chmod($IMG_DIR . $gambar_baru, 0644);
                             }
                         }
                     }
@@ -111,7 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if (empty($error)) {
                     if ($edit_id > 0) {
-                        $stmt = $conn->prepare("SELECT gambar FROM kegiatan WHERE id = ?");
+                        // UPDATE
+                        $stmt = $conn->prepare("SELECT gambar FROM kegiatan WHERE id = ? LIMIT 1");
                         $stmt->bind_param("i", $edit_id);
                         $stmt->execute();
                         $old = $stmt->get_result()->fetch_assoc();
@@ -138,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         $stmt->close();
                     } else {
+                        // INSERT
                         $stmt = $conn->prepare("INSERT INTO kegiatan (nama, deskripsi, tanggal, waktu, tipe, gambar) VALUES (?, ?, ?, ?, ?, ?)");
                         $stmt->bind_param("ssssss", $nama, $deskripsi, $tanggal, $waktu, $tipe, $gambar_baru);
                         if ($stmt->execute()) {
@@ -156,7 +157,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Ambil semua kegiatan
+// ============================================
+// AMBIL SEMUA KEGIATAN
+// ============================================
 $kegiatan = [];
 $sql = "SELECT * FROM kegiatan ORDER BY 
         (tanggal < CURDATE()) ASC, 
@@ -169,58 +172,31 @@ if ($result) {
     }
 }
 
-// Hitung kegiatan lewat (untuk badge cleanup)
-$expired_count = countExpiredKegiatan();
-
 include '../admin/includes/sidebar.php';
 ?>
 
 <div class="container-fluid">
 
     <!-- ============================================
-         PAGE HEADER + TOMBOL CLEANUP
+         PAGE HEADER
          ============================================ -->
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
         <div>
             <h1 class="h3 fw-bold text-dark" style="color: var(--siavo-red-heading) !important;">Kelola Kegiatan</h1>
             <p class="text-muted small mb-0">Kelola kegiatan SEMA & SIAVO yang tampil di halaman Kegiatan</p>
         </div>
-
-        <?php if ($expired_count > 0): ?>
-        <form method="POST"
-            onsubmit="return confirm('Hapus <?php echo $expired_count; ?> kegiatan yang sudah lewat lebih dari 2 hari?\n\nFile gambar juga akan dihapus permanen.')"
-            class="d-flex align-items-center gap-2 flex-wrap">
-            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-            <input type="hidden" name="action" value="cleanup">
-            <span class="text-muted small d-flex align-items-center gap-1">
-                <i class="fas fa-broom" style="color:var(--red)"></i>
-                <strong><?php echo $expired_count; ?></strong> kegiatan lewat
-            </span>
-            <button type="submit" class="btn-bersihkan">
-                Bersihkan Sekarang
-            </button>
-        </form>
-        <?php endif; ?>
     </div>
-
-    <?php if ($auto_deleted > 0): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-broom me-1"></i>
-        <strong><?php echo $auto_deleted; ?></strong> kegiatan lama (lewat > 2 hari) otomatis dihapus.
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <?php endif; ?>
 
     <?php if ($error): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-circle-exclamation me-1"></i> <?php echo $error; ?>
+        <i class="fas fa-circle-exclamation me-1"></i> <?php echo htmlspecialchars($error); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-1"></i> <?php echo $success; ?>
+        <i class="fas fa-check-circle me-1"></i> <?php echo htmlspecialchars($success); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     <?php endif; ?>
@@ -339,15 +315,13 @@ include '../admin/includes/sidebar.php';
                         </thead>
                         <tbody>
                             <?php foreach ($kegiatan as $k):
-                                $is_lewat = strtotime($k['tanggal']) < strtotime(date('Y-m-d'));
-                                $gambar_src = !empty($k['gambar'])
-                                    ? $IMG_URL . $k['gambar']
-                                    : '';
+                                $is_lewat   = strtotime($k['tanggal']) < strtotime(date('Y-m-d'));
+                                $gambar_src = !empty($k['gambar']) ? $IMG_URL . rawurlencode($k['gambar']) : '';
                             ?>
                             <tr<?php echo $is_lewat ? ' style="opacity:.6"' : ''; ?>>
                                 <td>
                                     <?php if ($gambar_src): ?>
-                                    <img src="<?php echo $gambar_src; ?>" alt=""
+                                    <img src="<?php echo htmlspecialchars($gambar_src); ?>" alt=""
                                         style="width:60px;height:60px;object-fit:cover;border-radius:8px">
                                     <?php else: ?>
                                     <div
@@ -380,14 +354,14 @@ include '../admin/includes/sidebar.php';
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn-icon-modern edit" onclick='editKegiatan(<?php echo json_encode([
-                                            "id" => $k["id"],
-                                            "nama" => $k["nama"],
+                                            "id"        => $k["id"],
+                                            "nama"      => $k["nama"],
                                             "deskripsi" => $k["deskripsi"],
-                                            "tanggal" => $k["tanggal"],
-                                            "waktu" => $k["waktu"],
-                                            "tipe" => $k["tipe"],
-                                            "gambar" => $k["gambar"]
-                                        ]); ?>)' title="Edit">
+                                            "tanggal"   => $k["tanggal"],
+                                            "waktu"     => $k["waktu"],
+                                            "tipe"      => $k["tipe"],
+                                            "gambar"    => $k["gambar"]
+                                        ], JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' title="Edit">
                                         <i class="fas fa-pencil"></i>
                                     </button>
                                     <form method="POST" style="display:inline"
@@ -395,7 +369,7 @@ include '../admin/includes/sidebar.php';
                                         <input type="hidden" name="csrf_token"
                                             value="<?php echo generateCSRFToken(); ?>">
                                         <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="delete_id" value="<?php echo $k['id']; ?>">
+                                        <input type="hidden" name="delete_id" value="<?php echo (int) $k['id']; ?>">
                                         <button type="submit" class="btn-icon-modern delete" title="Hapus">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -430,7 +404,7 @@ function editKegiatan(data) {
     document.getElementById('gambarPreviewWrap').style.display = 'none';
 
     if (data.gambar) {
-        document.getElementById('gambarLamaImg').src = IMG_URL + data.gambar;
+        document.getElementById('gambarLamaImg').src = IMG_URL + encodeURIComponent(data.gambar);
         document.getElementById('gambarLama').style.display = 'block';
     } else {
         document.getElementById('gambarLama').style.display = 'none';

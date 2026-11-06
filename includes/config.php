@@ -1,4 +1,11 @@
 <?php
+// ============================================
+// SIAVO — Konfigurasi Aplikasi
+// ============================================
+
+// Set timezone PHP ke WIB
+date_default_timezone_set('Asia/Jakarta');
+
 // Konfigurasi database
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
@@ -14,14 +21,16 @@ define('FEEDBACK_DIR', $_SERVER['DOCUMENT_ROOT'] . '/siavo/uploads/feedback/');
 define('FEEDBACK_URL', '/siavo/uploads/feedback/');
 define('MAX_FILE_SIZE', 2 * 1024 * 1024); // 2MB
 define('ALLOWED_EXTENSIONS', ['pdf', 'jpg', 'jpeg', 'png']);
-
-// Foto profil default — SVG avatar icon (bukan gambar upload user)
 define('DEFAULT_PROFILE_PHOTO', 'default-avatar.svg');
 
 // Mulai session
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Koneksi database
+// ============================================
+// Koneksi database (CUMA SEKALI)
+// ============================================
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 if ($conn->connect_error) {
@@ -31,16 +40,19 @@ if ($conn->connect_error) {
 // Set charset
 $conn->set_charset("utf8mb4");
 
-// Fungsi untuk debug (opsional)
+// Set timezone MySQL ke WIB
+$conn->query("SET time_zone = '+07:00'");
+
+// ============================================
+// Fungsi helper
+// ============================================
 function debug($data) {
     echo '<pre>';
     print_r($data);
     echo '</pre>';
 }
 
-// Fungsi untuk redirect
 function redirect($url) {
     header("Location: $url");
     exit();
 }
-?>

@@ -149,11 +149,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 $conn->commit();
                 $success = true;
 
+                // ============================================
+                // NOTIFIKASI EMAIL KE MAHASISWA
+                // ============================================
+                $stmt = $conn->prepare("
+                    SELECT l.*, k.nama_kategori, u.email
+                    FROM laporan l
+                    LEFT JOIN kategori k ON l.kategori_id = k.id
+                    LEFT JOIN users u ON l.user_id = u.id
+                    WHERE l.id = ? LIMIT 1
+                ");
+                $stmt->bind_param("i", $id);
+                $stmt->execute();
+                $laporan_notif = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+
+                if ($laporan_notif && !empty($laporan_notif['email'])) {
+                    notifyMahasiswaStatusBerubah($laporan_notif, $status, $ket);
+                }
+
                 // Refresh data
                 $stmt = $conn->prepare("
                     SELECT l.*, k.nama_kategori, 
-                           u.nama_lengkap as pelapor_terbaru, u.nim as nim_terbaru,
-                           u.kontak as kontak_terbaru, u.prodi as prodi_terbaru
+                        u.nama_lengkap as pelapor_terbaru, u.nim as nim_terbaru,
+                        u.kontak as kontak_terbaru, u.prodi as prodi_terbaru
                     FROM laporan l 
                     LEFT JOIN kategori k ON l.kategori_id = k.id 
                     LEFT JOIN users u ON l.user_id = u.id 

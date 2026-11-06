@@ -470,3 +470,41 @@ function countExpiredKegiatan() {
     $r = $conn->query("SELECT COUNT(*) c FROM kegiatan WHERE tanggal < DATE_SUB(CURDATE(), INTERVAL 2 DAY)");
     return $r ? (int)$r->fetch_assoc()['c'] : 0;
 }
+
+// ============================================
+// 11. NOTIFIKASI EMAIL
+// ============================================
+require_once __DIR__ . '/mailer.php';
+
+/**
+ * Kirim notifikasi laporan baru ke admin
+ * Return: bool
+ */
+function notifyAdminLaporanBaru($laporan) {
+    $cfg = require __DIR__ . '/mail-config.php';
+
+    $subject = "[SIAVO] Laporan Baru: " . $laporan['nomor_tiket'];
+    $body    = emailTemplateLaporanBaru($laporan);
+
+    return sendEmailNotification($cfg['admin_email'], $subject, $body);
+}
+
+/**
+ * Kirim notifikasi update status ke mahasiswa
+ * Return: bool
+ */
+function notifyMahasiswaStatusBerubah($laporan, $status_baru, $keterangan = '') {
+    if (empty($laporan['email'])) {
+        return false;
+    }
+
+    $subject = "[SIAVO] Update Status: " . $laporan['nomor_tiket'] . " → " . getStatusLabel($status_baru);
+    $body    = emailTemplateStatusBerubah($laporan, $status_baru, $keterangan);
+
+    return sendEmailNotification(
+        $laporan['email'],
+        $subject,
+        $body,
+        $laporan['nama_pelapor'] ?? ''
+    );
+}

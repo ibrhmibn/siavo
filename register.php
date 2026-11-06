@@ -8,17 +8,17 @@ if (isLoggedIn()) redirect('index.php');
 
 $error = ''; $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!validateCSRFToken($_POST['csrf_token'])) {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? '')) {
         $error = 'Token CSRF tidak valid.';
     } else {
-        $username = sanitize($_POST['username']);
-        $password = $_POST['password'];
-        $confirm  = $_POST['confirm_password'];
-        $nama     = sanitize($_POST['nama_lengkap']);
-        $email    = sanitize($_POST['email']);
-        $nim      = sanitize($_POST['nim']);
-        $prodi    = sanitize($_POST['prodi']);
-        $kontak   = sanitize($_POST['kontak']);
+        $username = sanitize($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirm  = $_POST['confirm_password'] ?? '';
+        $nama     = sanitize($_POST['nama_lengkap'] ?? '');
+        $email    = sanitize($_POST['email'] ?? '');
+        $nim      = sanitize($_POST['nim'] ?? '');
+        $prodi    = sanitize($_POST['prodi'] ?? '');
+        $kontak   = sanitize($_POST['kontak'] ?? '');
 
         $errs = [];
         if (strlen($username) < 3) $errs[] = 'Username minimal 3 karakter';
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else $error = implode('<br>', $errs);
     }
 }
-$conn->close();
+
 include 'includes/header_guest.php';
 ?>
 
@@ -76,13 +76,13 @@ include 'includes/header_guest.php';
                     <div class="field">
                         <label for="username">Username</label>
                         <div class="field-input"><span class="ico"><i class="fas fa-user"></i></span>
-                            <input type="text" id="username" name="username" required>
+                            <input type="text" id="username" name="username" required autocomplete="username">
                         </div>
                     </div>
                     <div class="field">
                         <label for="nama_lengkap">Nama Lengkap</label>
                         <div class="field-input"><span class="ico"><i class="fas fa-id-card"></i></span>
-                            <input type="text" id="nama_lengkap" name="nama_lengkap" required>
+                            <input type="text" id="nama_lengkap" name="nama_lengkap" required autocomplete="name">
                         </div>
                     </div>
                 </div>
@@ -90,7 +90,8 @@ include 'includes/header_guest.php';
                 <div class="field">
                     <label for="email">Email</label>
                     <div class="field-input"><span class="ico"><i class="fas fa-envelope"></i></span>
-                        <input type="email" id="email" name="email" placeholder="email@kampus.ac.id" required>
+                        <input type="email" id="email" name="email" placeholder="email@kampus.ac.id" required
+                            autocomplete="email">
                     </div>
                 </div>
 
@@ -98,7 +99,8 @@ include 'includes/header_guest.php';
                     <div class="field">
                         <label for="password">Password</label>
                         <div class="field-input"><span class="ico"><i class="fas fa-lock"></i></span>
-                            <input type="password" id="password" name="password" placeholder="Min. 6 karakter" required>
+                            <input type="password" id="password" name="password" placeholder="Min. 6 karakter" required
+                                autocomplete="new-password">
                             <button type="button" class="toggle" id="tp1"><i class="fas fa-eye" id="ei1"></i></button>
                         </div>
                     </div>
@@ -106,7 +108,7 @@ include 'includes/header_guest.php';
                         <label for="confirm_password">Konfirmasi</label>
                         <div class="field-input"><span class="ico"><i class="fas fa-lock"></i></span>
                             <input type="password" id="confirm_password" name="confirm_password"
-                                placeholder="Ulangi password" required>
+                                placeholder="Ulangi password" required autocomplete="new-password">
                             <button type="button" class="toggle" id="tp2"><i class="fas fa-eye" id="ei2"></i></button>
                         </div>
                     </div>
@@ -162,4 +164,6 @@ bindToggle('tp1', 'password', 'ei1');
 bindToggle('tp2', 'confirm_password', 'ei2');
 </script>
 
-<?php include 'includes/footer_guest.php'; ?>
+<?php include 'includes/footer_guest.php'; 
+if(isset($conn)) { $conn->close(); }
+?>

@@ -10,7 +10,7 @@ if (!isLoggedIn() || getUserRole() != 'admin') {
 }
 
 // AUTO-CLEANUP kegiatan lewat > 2 hari
-$auto_deleted_kegiatan = autoCleanupKegiatan();
+$auto_deleted_kegiatan = 0;
 
 // Statistik
 $stats = ['total'=>0,'pengajuan'=>0,'verifikasi'=>0,'tindak_lanjut'=>0,'selesai'=>0];
@@ -44,14 +44,6 @@ include 'includes/sidebar.php';
         <span>Update: <?php echo date('d/m/Y H:i'); ?> WIB</span>
     </div>
 </div>
-
-<?php if ($auto_deleted_kegiatan > 0): ?>
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="fas fa-broom me-1"></i>
-    <strong><?php echo $auto_deleted_kegiatan; ?></strong> kegiatan lama otomatis dihapus (lewat > 2 hari).
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-<?php endif; ?>
 
 <div class="stats-grid">
     <div class="stat-card-modern border-blue">

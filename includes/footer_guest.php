@@ -4,8 +4,8 @@
     <div class="wrap">
         <div class="fgrid">
             <div>
-                <a href="<?php echo APP_URL; ?>" class="logo" style="color:var(--ink)">
-                    <span class="logo-dot"></span>SIAVO
+                <a href="<?php echo APP_URL; ?>" class="logo" style="color:#fff">
+                    <span class="logo-dot" style="background:var(--yellow)"></span>SIAVO
                 </a>
                 <p style="margin-top:12px;max-width:32ch">
                     Sistem Informasi Aspirasi dan Advokasi Online. Jembatan digital antara mahasiswa dan institusi
@@ -43,21 +43,26 @@
                     <li><a href="<?php echo APP_URL; ?>login.php">Masuk</a></li>
                     <li><a href="<?php echo APP_URL; ?>register.php">Daftar</a></li>
                 </ul>
-                <h4 style="margin-top:24px">Kontak</h4>
+                <h4 style="margin-top:24px">Kontak Sekretariat</h4>
                 <ul>
-                    <li style="font-size:.85rem;color:var(--side-muted,#c8b0b2)">
-                        <i class="fas fa-map-pin" style="margin-right:6px;color:var(--red)"></i>Gedung PKM Lt. 2
+                    <li style="font-size:.85rem;color:var(--side-muted,#c8b0b2); line-height: 1.5; margin-bottom: 8px;">
+                        <i class="fas fa-map-marker-alt" style="margin-right:6px;color:var(--yellow)"></i>
+                        Kampus II Gd. FUAD Lt.1 Jl. Puspita Jaya, Pintu, Jenangan, Ponorogo 63492
                     </li>
-                    <li style="font-size:.85rem;color:var(--side-muted,#c8b0b2)">
-                        <i class="fas fa-envelope"
-                            style="margin-right:6px;color:var(--red)"></i>advokasi@bemkampus.ac.id
+                    <li style="font-size:.85rem;color:var(--side-muted,#c8b0b2); margin-bottom: 8px;">
+                        <i class="fas fa-envelope" style="margin-right:6px;color:var(--yellow)"></i>
+                        semafuaduinponorogo@gmail.com
+                    </li>
+                    <li style="font-size:.85rem;color:var(--side-muted,#c8b0b2);">
+                        <i class="fas fa-phone" style="margin-right:6px;color:var(--yellow)"></i>
+                        0859176889431
                     </li>
                 </ul>
             </div>
         </div>
 
         <div class="copy">
-            <span>© <?php echo date('Y'); ?> Lenathyodev · Lembaga Kemahasiswaan</span>
+            <span>© <?php echo date('Y'); ?> SEMA FUAD UIN Ponorogo · Lembaga Kemahasiswaan</span>
             <span>Dibuat untuk mahasiswa.</span>
         </div>
     </div>

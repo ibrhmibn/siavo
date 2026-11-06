@@ -7,7 +7,7 @@ $page_active = $page_active ?? '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo APP_NAME; ?> · <?php echo $page_title ?? 'Beranda'; ?></title>
+    <title><?php echo escape(APP_NAME); ?> · <?php echo escape($page_title ?? 'Beranda'); ?></title>
     <meta name="description"
         content="Sistem Informasi Aspirasi dan Advokasi Online — jembatan digital antara mahasiswa dan institusi.">
 
@@ -20,24 +20,81 @@ $page_active = $page_active ?? '';
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/landing.css">
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/landing.css?v=3">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>assets/css/theme-transition.css">
 
-    <!-- Anti-flash: terapkan tema sebelum CSS lain render -->
+    <!-- Anti-flash: terapkan tema sebelum CSS lain render (Paksa Light Mode) -->
     <script>
     (function() {
         try {
             var t = localStorage.getItem('siavo-theme');
             if (t === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
-            } else if (t === 'light') {
+            } else {
+                // Paksa selalu light mode kalau user belum pernah milih
                 document.documentElement.setAttribute('data-theme', 'light');
-            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.setAttribute('data-theme', 'dark');
             }
         } catch (e) {}
     })();
     </script>
+
+    <style>
+    /* ============================================
+       CSS KHUSUS HEADER (LOGO & LAYOUT)
+       ============================================ */
+    .brand-logos {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-right: 15px;
+        padding-right: 15px;
+        border-right: 2px solid var(--line-strong);
+    }
+
+    .logo-box {
+        background: var(--yellow);
+        /* Kuning Emas UIN */
+        padding: 6px 14px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        /* Shadow kuning */
+        transition: transform 0.2s ease;
+    }
+
+    .logo-box:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+    }
+
+    .logo-box img {
+        height: 32px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    @media (max-width: 768px) {
+        .brand-logos {
+            gap: 8px;
+            padding-right: 8px;
+            border-right: 0;
+        }
+
+        .logo-box {
+            padding: 4px 8px;
+        }
+
+        .logo-box img {
+            height: 24px;
+        }
+
+        .logo-text {
+            display: none !important;
+        }
+    }
+    </style>
 </head>
 
 <body>
@@ -45,7 +102,16 @@ $page_active = $page_active ?? '';
     <header class="nav">
         <div class="wrap">
             <a href="<?php echo APP_URL; ?>" class="logo" aria-label="SIAVO beranda">
-                <span class="logo-dot"></span>SIAVO
+                <div class="brand-logos">
+                    <div class="logo-box">
+                        <img src="<?php echo APP_URL; ?>assets/img/logo/logo-uin.png" alt="UIN Ponorogo">
+                        <img src="<?php echo APP_URL; ?>assets/img/logo/logo-sema.webp" alt="SEMA FUAD">
+                    </div>
+                </div>
+                <!-- Teks SIAVO -->
+                <span class="logo-text" style="display: flex; align-items: center; gap: 8px;">
+                    <span class="logo-dot"></span>SIAVO
+                </span>
             </a>
 
             <nav class="links" aria-label="Navigasi utama">

@@ -67,11 +67,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($stmt->execute()) {
                 $laporan_id = $stmt->insert_id;
-                addStatusHistory($laporan_id, 'pengajuan', 'Aspirasi berhasil dikirim dan masuk ke tahap pengajuan.', null);
 
-                if (isset($_FILES['dokumen']) && $_FILES['dokumen']['error'][0] != 4) {
+                addStatusHistory(
+                    $laporan_id,
+                    'pengajuan',
+                    'Aspirasi berhasil dikirim dan masuk ke tahap pengajuan.',
+                    null
+                );
+
+                if (isset($_FILES['dokumen']) && !empty($_FILES['dokumen']['name'][0])) {
                     uploadFiles($_FILES['dokumen'], $laporan_id);
                 }
+
+                // ============================================
+                // NOTIFIKASI EMAIL KE ADMIN
+                // ============================================
+                $stmt_kat = $conn->prepare("SELECT nama_kategori FROM kategori WHERE id = ? LIMIT 1");
+                $stmt_kat->bind_param("i", $kategori_id);
+                $stmt_kat->execute();
+                $kat_row = $stmt_kat->get_result()->fetch_assoc();
+                $stmt_kat->close();
+
+                $laporan_data = [
+                    'nomor_tiket'   => $ticket_number,
+                    'judul'         => $judul_safe,
+                    'nama_pelapor'  => $user_data['nama_lengkap'],
+                    'nim'           => $user_data['nim'],
+                    'prodi'         => $user_data['prodi'],
+                    'isi'           => $isi_safe,
+                    'created_at'    => date('Y-m-d H:i:s'),
+                    'nama_kategori' => $kat_row['nama_kategori'] ?? '-',
+                ];
+
+                // Kirim ke admin (tidak blocking user kalau gagal)
+                notifyAdminLaporanBaru($laporan_data);
 
                 $success = true;
             } else {
